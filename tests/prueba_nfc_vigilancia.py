@@ -51,11 +51,11 @@ with sync_playwright() as p:
     check('Al iniciar la jornada: reinicia el lector', pg.evaluate("__nfc.reinicios") > r0, pg.evaluate("__nfc.reinicios"))
     # Primera tarjeta: pide transitabilidad; al cerrarla se reinicia el lector y la tarjeta suma
     r1 = pg.evaluate("__nfc.reinicios")
-    pg.evaluate("__nfc.lis.tarjeta({texto:'cos:C',id:'01'})")
+    pg.evaluate("__nfc.lis.tarjeta({texto:'R',id:'01'})")
     pg.wait_for_selector('#hojaCuerpo [data-t="Transitable"]', timeout=5000)
     pg.eval_on_selector('#hojaCuerpo [data-t="Transitable"]', 'b=>b.click()'); time.sleep(.6)
     check('Tras elegir la transitabilidad: NO reinicia (evita apagar el lector justo al acercar la tarjeta)', pg.evaluate("__nfc.reinicios") == r1)
-    check('La tarjeta C sumó 1C', pg.evaluate("(S.hechos.get('P1')||{}).cosechados") == 1)
+    check('La tarjeta R sumó 1R', pg.evaluate("(S.hechos.get('P1')||{}).racimos") == 1)
     # Más de 60 s sin leer: la revisión periódica lo reinicia
     r2 = pg.evaluate("__nfc.reinicios")
     pg.evaluate("NFC.ultLect=Date.now()-600000;__nfc.activo=true;asegurarNfc('revisar')"); time.sleep(.3)

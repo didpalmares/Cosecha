@@ -18,7 +18,7 @@ with sync_playwright() as p:
     pg.goto(BASE + '/visor.html'); pg.wait_for_function("typeof abrirRep==='function'&&typeof mapa!=='undefined'", timeout=30000); time.sleep(1)
     pg.evaluate("""()=>{document.querySelector('#login').hidden=true;document.querySelector('#app').hidden=false;mapa.invalidateSize();window.chunkLote=async()=>[];
       const mk=(id,u,nom,fecha,h0,dlng,ndiag)=>{const t0=Date.parse(fecha+'T'+h0+':00-05:00');const c=[],t=[];for(let i=0;i<=40;i++){c.push([-78.70+dlng,1.50+i*0.0001]);t.push(t0+i*60000);}
-        const diags=[...Array(ndiag)].map((_,k)=>({tipo:'diagnostico',id:id+'d'+k,palma_id:'P'+k,lote:'IT01',linea:3,palma:k+1,labor:'cosecha',cosechados:2,maduros:1,verdes:0,sobremaduros:0,fruto_suelto:0,evaluador:nom,creado:new Date(t0+(10+k*10)*60000).toISOString(),lat:1.50+(10+k*10)*0.0001,lng:-78.70+dlng,n_fotos:0}));
+        const diags=[...Array(ndiag)].map((_,k)=>({tipo:'diagnostico',id:id+'d'+k,palma_id:'P'+k,lote:'IT01',linea:3,palma:k+1,labor:'corte',racimos:3,evaluador:nom,creado:new Date(t0+(10+k*10)*60000).toISOString(),lat:1.50+(10+k*10)*0.0001,lng:-78.70+dlng,n_fotos:0}));
         const j={id,fecha,evaluador:nom,usuario:u,inicio:new Date(t0).toISOString(),fin:new Date(t0+40*60000).toISOString(),hora_inicio:h0,hora_fin:'',duracion_min:40,km:0.44,ha:1,palmas:100,metodo:'calle',
           n_paradas:0,min_paradas:0,min_mov:40,por_lote:[],densidad:115,app:'',lotes:new Set(['IT01']),paradas:[],track:{c,t,acc:c.map(()=>4)},header:{},secuencias:null,tiempos:null,vel:2,diags};
         diags.forEach(d=>d._j=j);return j;};
@@ -58,7 +58,7 @@ with sync_playwright() as p:
     pg.evaluate("pausarRep();REP.i=0;prepararRep();REP.vel=3600;document.querySelector('#repDiag').checked=true;iniciarRep()")
     pg.wait_for_function("!!document.querySelector('.leaflet-popup-content')", timeout=15000)
     t1 = pg.evaluate("REP.T"); time.sleep(1.2); t2 = pg.evaluate("REP.T")
-    check('Uno a uno: muestra el registro y pausa', abs(t2 - t1) < 1 and '2C + 1M' in pg.evaluate("document.querySelector('.leaflet-popup-content').innerText"))
+    check('Uno a uno: muestra el registro y pausa', abs(t2 - t1) < 1 and '3R' in pg.evaluate("document.querySelector('.leaflet-popup-content').innerText"), pg.evaluate("document.querySelector('.leaflet-popup-content').innerText")[:120])
     # Cerrar
     pg.click('#repX'); time.sleep(.5)
     c = pg.evaluate("({vis:!document.querySelector('#rep').hidden,rec:mapa.hasLayer(capaRec),diag:mapa.hasLayer(capaDiag),on:REP.on})")

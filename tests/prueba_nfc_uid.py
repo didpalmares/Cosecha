@@ -30,20 +30,24 @@ with sync_playwright() as p:
     pg.evaluate("""()=>{localStorage.removeItem('cos_nfc_uid');NFC.uids=null;SES={u:'op1',nombre:'Op',rol:'operario'};const m=1/111320;
       const f={type:'Feature',geometry:{type:'Point',coordinates:[-78.7,1.7]},properties:{_id:'P1',_lote:'L1',_linea:1,_num:1,_existe:true}};
       S.palmas={type:'FeatureCollection',features:[f]};S.idx=new Map([['P1',f]]);
-      S.jornada={id:'J1',evaluador:'Op',estado:'activa',seleccion:[],inicio:new Date().toISOString(),labor:'cosecha',
+      S.jornada={id:'J1',evaluador:'Op',estado:'activa',seleccion:[],inicio:new Date().toISOString(),labor:'recoleccion',viaje:0,descargues:[],
         transito:[{lote:'L1',entrada:'Transitable',t_entrada:new Date().toISOString(),salida:'',t_salida:''}]};
       S.gps={lat:1.7+m,lng:-78.7,acc:4,t:Date.now()};NFC.ult=null;actualizarJornadaUI();}""")
-    a = lambda: pg.evaluate("(S.hechos.get('P1')||{}).cosechados||0")
+    a = lambda: pg.evaluate("(S.hechos.get('P1')||{}).racimos||0")
     r = pg.evaluate("nfcLeido({texto:'',id:'04A1B2',motivo:'lectura'})"); time.sleep(.6)
     check('Tarjeta nunca leída y sin contenido: avisa y no registra', r == 'fallida' and a() == 0, r)
-    r = pg.evaluate("nfcLeido({texto:'cos:C',id:'04A1B2'})"); time.sleep(.6)
-    check('Primera lectura completa: registra 1C y aprende la tarjeta', r == 'ok' and a() == 1 and pg.evaluate("uidsNfc()['04A1B2']") == 'C', pg.evaluate("uidsNfc()"))
+    r = pg.evaluate("nfcLeido({texto:'R',id:'04A1B2'})"); time.sleep(.6)
+    check('Primera lectura completa: registra 1R y aprende la tarjeta', r == 'ok' and a() == 1 and pg.evaluate("uidsNfc()['04A1B2']") == 'R', pg.evaluate("uidsNfc()"))
     r = pg.evaluate("nfcLeido({texto:'',id:'04A1B2',motivo:'lectura'})"); time.sleep(.6)
-    check('Pasada rápida sin contenido: el número único basta (2C)', r == 'ok' and a() == 2, (r, a()))
+    check('Pasada rápida sin contenido: el número único basta (2R)', r == 'ok' and a() == 2, (r, a()))
     check('Conteo «por número único»', pg.evaluate("S.jornada.nfc.por_uid") == 1)
-    check('Lo aprendido queda guardado en el celular', pg.evaluate("JSON.parse(localStorage.getItem('cos_nfc_uid'))['04A1B2']") == 'C')
-    pg.evaluate("nfcLeido({texto:'cos:M',id:'04A1B2'})"); time.sleep(.6)
-    check('Tarjeta regrabada como M: se actualiza con la lectura completa', pg.evaluate("uidsNfc()['04A1B2']") == 'M' and pg.evaluate("(S.hechos.get('P1')||{}).maduros") == 1)
+    check('Lo aprendido queda guardado en el celular', pg.evaluate("JSON.parse(localStorage.getItem('cos_nfc_uid'))['04A1B2']") == 'R')
+    pg.evaluate("nfcLeido({texto:'D',id:'04A1B2'})"); time.sleep(.6)
+    check('Tarjeta regrabada como D: se actualiza con la lectura completa (1.ª pasada de D pide confirmar)', pg.evaluate("uidsNfc()['04A1B2']") == 'D'
+          and pg.evaluate("S.jornada.descargues.length") == 0 and 'otra vez' in (pg.evaluate("VOZ.ultimoPol") or '') and a() == 2, pg.evaluate("VOZ.ultimoPol"))
+    pg.evaluate("NFC.ult=null;nfcLeido({texto:'',id:'04A1B2',motivo:'lectura'})"); time.sleep(.6)
+    check('Segunda pasada solo con el número único: confirma el descargue (2R)', pg.evaluate("S.jornada.descargues.length") == 1 and pg.evaluate("S.jornada.descargues[0].racimos") == 2,
+          pg.evaluate("S.jornada.descargues"))
     check('Sin errores de JavaScript', not errores, errores[:3])
     nav.close()
 

@@ -1,4 +1,4 @@
-"""Pruebas de los cambios: sincronización solo de jornadas finalizadas, edición a 20 m,
+"""Pruebas de los cambios: sincronización solo de jornadas finalizadas, edición a 10 m (radio de selección de la palma),
 botón de mantener presionado y bloqueo de cierre por otro usuario. GitHub simulado."""
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -56,14 +56,14 @@ with sync_playwright() as p:
     est = pg.evaluate("async()=>Object.fromEntries((await dbAll('jornadas')).map(j=>[j.id,j.sync||j.estado]))")
     check('B queda sincronizada y E sigue pendiente', est.get('B') == 'sincronizado' and est.get('E') == 'pendiente', est)
 
-    # ---------- 4) Edición a 20 m ----------
+    # ---------- 4) Edición a 10 m (radioSel) ----------
     def abrir_edicion(metros):
         return pg.evaluate("""async(m)=>{
           cerrarHoja&&cerrarHoja();
           const lat=1.70,lng=-78.70;const dlat=m/111320;
           S.gps={lat:lat+dlat,lng,acc:4,t:Date.now()};
-          const r={id:'R1',palma_id:'PX',jornada_id:'B2',evaluador:'Operario Uno',estado:'sana',n1_codigo:'SN',n1:'Sana',n2:'',n3:'',rama:null,problemas:[],sintomas:[],
-            produccion:'Sí',transitabilidad:'',observaciones:'',fotos:[],sync:'pendiente',lat,lng,lote:'IT01',linea:3,numero:14,creado:new Date().toISOString()};
+          const r={id:'R1',palma_id:'PX',jornada_id:'B2',evaluador:'Operario Uno',estado:'cosecha',labor:'corte',racimos:2,cond:'',n1_codigo:'R',n1:'2R',n2:'',n3:'',rama:null,problemas:['R'],sintomas:[],
+            transitabilidad:'',observaciones:'',fotos:[],sync:'pendiente',lat,lng,lote:'IT01',linea:3,numero:14,creado:new Date().toISOString()};
           await abrirFormulario(r);
           const h=document.querySelector('#hojaCuerpo')||document;
           return {d:dist(S.gps.lat,S.gps.lng,lat,lng),titulo:(document.querySelector('#hojaTitulo')||{}).textContent||'',
@@ -71,10 +71,12 @@ with sync_playwright() as p:
             aviso:[...h.querySelectorAll('.aviso')].map(a=>a.textContent).join(' | '),lejos:F.lejos};
         }""", metros)
     r33 = abrir_edicion(33)
-    check('Edición a ~33 m: solo lectura', r33['disabled'] and not r33['guardar'] and r33['lejos'] and 'debe estar a 20 m o menos' in r33['aviso'],
+    check('Edición a ~33 m: solo lectura', r33['disabled'] and not r33['guardar'] and r33['lejos'] and 'debe estar a 10 m o menos' in r33['aviso'],
           f"{r33['d']:.1f} m · {r33['aviso'][:90]}")
     r11 = abrir_edicion(11)
-    check('Edición a ~11 m: editable', (not r11['disabled']) and r11['guardar'] and not r11['lejos'], f"{r11['d']:.1f} m")
+    check('Edición a ~11 m: solo lectura (más de 10 m)', r11['disabled'] and not r11['guardar'] and r11['lejos'], f"{r11['d']:.1f} m")
+    r6 = abrir_edicion(6)
+    check('Edición a ~6 m: editable', (not r6['disabled']) and r6['guardar'] and not r6['lejos'], f"{r6['d']:.1f} m")
     pg.evaluate("cerrarHoja()")
 
     # ---------- 3) Botón mantener presionado (#jFin real del panel de jornada) ----------

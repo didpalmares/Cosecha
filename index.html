@@ -1049,7 +1049,7 @@ input[type=range]{flex:1;accent-color:var(--acento);height:28px}
   <div class="tit">COSECHA<small>REGISTRO DE COSECHA GEORREFERENCIADO</small></div>
   <div class="carga"><i></i></div>
   <div id="splashMsg">Iniciando…</div>
-  <div id="splashVer">VERSIÓN 20261118:2224</div>
+  <div id="splashVer">VERSIÓN 20261118:2305</div>
 </div>
 
 <div id="login" hidden>
@@ -1064,7 +1064,7 @@ input[type=range]{flex:1;accent-color:var(--acento);height:28px}
     <p class="tenue" id="lgMsg"></p>
   </form>
   <p id="lgRed"></p>
-  <div id="lgVer2">VERSIÓN 20261118:2224</div>
+  <div id="lgVer2">VERSIÓN 20261118:2305</div>
   <button type="button" class="btn" id="lgAct" style="margin-top:4px;font-size:13px;padding:7px 12px">⟳ BUSCAR ACTUALIZACIÓN</button>
   <button type="button" class="btn" id="lgInstalar" hidden>📲 INSTALAR EN ESTE CELULAR</button>
 </div>
@@ -1196,7 +1196,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
    Registro de cosecha georreferenciado sin conexión, con jornadas,
    registro del recorrido y sincronización con GitHub.
    ===================================================================== */
-const VERSION='20261118:2224';
+const VERSION='20261118:2305';
 /* Ejecutándose dentro de la APK de Android (Capacitor) o en el navegador. */
 const NATIVO=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 /* APK sin puente nativo (copia guardada antigua): con internet se recarga una vez para recibirlo. */
@@ -3291,7 +3291,7 @@ function hablarEsperar(txt){return new Promise(res=>{VOZ.ultimaFrase=txt;let ok=
   if(!('speechSynthesis' in window))return fin();
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang=VOZ.voz?VOZ.voz.lang:'es-CO';if(VOZ.voz)u.voice=VOZ.voz;u.rate=Number(S.cfg.velocidadVoz)||1;
     u.onend=u.onerror=fin;speechSynthesis.speak(u);setTimeout(fin,txt.length*110+3000);}catch(e){fin();}});}
-/* Habla sin escucharse: el micrófono se pausa mientras la app habla (si no, la confirmación «dos antesis» se volvería a registrar). */
+/* Habla sin escucharse: el micrófono se pausa mientras la app habla (si no, la confirmación «dos racimos» se volvería a registrar). */
 async function decir(txt){if(!txt)return;RV.nh++;RV.hablando=true;if(RV.nh===1)await pausarRec(true);
   try{await hablarEsperar(txt);}finally{await esperar(250);if(--RV.nh<=0){RV.nh=0;RV.hablando=false;if(RV.on)await pausarRec(false);}}}
 
@@ -3311,7 +3311,7 @@ async function alternarVozPol(){
     catch(err){toast(String(err&&err.message||err),6000);return;}}
   try{if(!VOZ.ctx)VOZ.ctx=new (window.AudioContext||window.webkitAudioContext)();else VOZ.ctx.resume();}catch(e){}
   PV.on=true;VOZ.escucha=true;$('#btDxVoz').classList.add('on');pantallaEncendida(true);
-  try{await decir('Registro por voz activado. Diga, por ejemplo: dos A, una P.');await escucharV(GRAM_POL,t=>{PV.cola=PV.cola.then(()=>procesarVoz(t)).catch(e=>console.warn(e));});}
+  try{await decir('Registro por voz activado. Diga, por ejemplo: dos racimos, o descargue.');await escucharV(GRAM_POL,t=>{PV.cola=PV.cola.then(()=>procesarVoz(t)).catch(e=>console.warn(e));});}
   catch(e){apagarVozPol();toast(String(e&&e.message||e),6000);}
 }
 function apagarVozPol(){PV.on=false;VOZ.escucha=false;RV.on=false;RV.cb=null;$('#btDxVoz').classList.remove('on');
@@ -3977,8 +3977,10 @@ async function descargarHistorial(d1,d2,conFotos,prog){
 async function importarJornadaGeo(g,zip){
   const h=g.jornada||{},id=h.id;
   const sp=s=>Array.isArray(s)?s:(s?String(s).split('|').filter(Boolean):[]);const sinJpg=f=>String(f).replace(/\.jpg$/i,'');
-  const regs=[],pts=[],paradas=[];
+  const regs=[],pts=[],paradas=[],descargues=[],alces=[];
   for(const ft of g.features||[]){const p=ft.properties||{},c=ft.geometry&&ft.geometry.coordinates;if(!c)continue;
+    if(p.tipo==='descargue'){descargues.push({id:p.id||uid(),n:p.n,racimos:Number(p.racimos)||0,t:p.t,hora:p.hora,lat:c[1],lng:c[0],acc:p.precision_m,lote:p.lote||'',fuente:p.fuente||''});continue;}
+    if(p.tipo==='alce'){alces.push({id:p.id||uid(),n:p.n,racimos:Number(p.racimos)||0,t_ini:p.t_ini,t_fin:p.t_fin,hora:p.hora,lat:c[1],lng:c[0],acc:p.precision_m,lote:p.lote||'',fuente:p.fuente||''});continue;}
     if(p.tipo==='recorrido'){const cs=ft.geometry.type==='LineString'?c:[c];const t0=Date.parse(h.inicio)||0;
       cs.forEach((q,i)=>pts.push({j:id,t:Date.parse((p.tiempos||[])[i])||t0+i*1000,lat:q[1],lng:q[0],acc:(p.precision_m||[])[i]??null,s:1}));}
     else if(p.tipo==='parada')paradas.push({n:p.n,inicio:Date.parse(p.inicio),fin:Date.parse(p.fin),duracion_min:p.duracion_min,lote:p.lote,tipo:p.clase,diagnosticos:p.diagnosticos,sin_senal_min:p.sin_senal_min,puntos:p.puntos,lat:c[1],lng:c[0]});
@@ -3997,7 +3999,7 @@ async function importarJornadaGeo(g,zip){
     await dbPut('fotos',{id:fid,registro_id:r.id,buf:await zf.async('arraybuffer'),type:'image/jpeg'});nf++;}
   const j={...h,id,estado:'finalizada',sync:'sincronizado',sync_fecha:h.sincronizado||null,importada:true,km:Number(h.km)||0,
     seleccion:h.lotes_seleccionados||[],paradas,resumen_paradas:h.n_paradas!=null?{...h}:null,visita:h.ha_recorridas!=null?{...h}:null,secuencias:h.secuencias||[],tiempos:h.tiempos||{}};
-  j.labor=laborInfo(h.labor)?laborInfo(h.labor).id:'corte';
+  j.labor=laborInfo(h.labor)?laborInfo(h.labor).id:'corte';j.descargues=descargues;j.alces=alces;j.viaje=0;
   if(regs.length)await dbPutVarios('registros',regs);if(pts.length)await dbPutVarios('track',pts);await dbPut('jornadas',j);
   return {regs:regs.length,fotos:nf};
 }

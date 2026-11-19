@@ -77,8 +77,8 @@ with sync_playwright() as p:
     check('Sin GPS: pide esperar la señal', t == 'No se puede iniciar la jornada' and 'Esperando señal GPS' in c, c[:80])
     # Guardas finales (si se movió después de abrir el planificador)
     pg.evaluate(f"S.gps={{lat:{LEJOS[0]},lng:{LEJOS[1]},acc:5,t:Date.now()}}")
-    g = pg.evaluate("""async()=>{await iniciarJornada([{lote:'IT01'}],'Operario Uno');const a=!!S.jornada;await iniciarCirugia('cirujano',{cirujano:{u:'a',nombre:'A'},auxiliar:{u:'b',nombre:'B'}},null,'2026-11-14');return {censo:a,cir:!!S.jornada};}""")
-    check('iniciarJornada / iniciarCirugia no crean jornada por fuera', not g['censo'] and not g['cir'], g)
+    g = pg.evaluate("""async()=>{const o={};for(const l of ['corte','recoleccion','alce']){S.laborSel=l;await iniciarJornada([{lote:'IT01'}],'Operario Uno');o[l]=!!S.jornada;}return o;}""")
+    check('iniciarJornada no crea jornada por fuera (Corte, Recolección ni Alce)', not any(g.values()), g)
     # Sin polígono cargado: no hay restricción
     pg.evaluate("S.plantacion=null"); t, c = intentar(LEJOS)
     check('Sin polígono cargado: no restringe', t != 'No se puede iniciar la jornada', t)

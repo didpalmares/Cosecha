@@ -1,4 +1,4 @@
-"""Lectura NFC más robusta: dos pasadas seguidas de la misma tarjeta (C, C) cuentan 2 sin depender de detectar el retiro;
+"""Lectura NFC más robusta: dos pasadas seguidas de la misma tarjeta (R, R) cuentan 2 sin depender de detectar el retiro;
 un rebote (< 0,45 s) se ignora; lectura fallida y tarjeta en blanco avisan con un mensaje claro y no registran;
 el conteo de lecturas queda en la jornada."""
 import os as _os, sys as _sys
@@ -33,12 +33,12 @@ with sync_playwright() as p:
       S.jornada={id:'J1',evaluador:'Op',estado:'activa',seleccion:[],inicio:new Date().toISOString(),labor:'cosecha',
         transito:[{lote:'L1',entrada:'Transitable',t_entrada:new Date().toISOString(),salida:'',t_salida:''}]};
       S.gps={lat:1.7+m,lng:-78.7,acc:4,t:Date.now()};NFC.ult=null;actualizarJornadaUI();}""")
-    a = pg.evaluate("nfcLeido({texto:'cos:C',id:'0A'})"); time.sleep(.6)
-    b = pg.evaluate("nfcLeido({texto:'cos:C',id:'0A'})"); time.sleep(.6)
-    check('C, C con 0,6 s entre pasadas: cuenta 2 (sin depender del retiro)', a == 'ok' and b == 'ok' and pg.evaluate("(S.hechos.get('P1')||{}).cosechados") == 2, (a, b))
-    c = pg.evaluate("nfcLeido({texto:'cos:C',id:'0A'})")
-    d = pg.evaluate("nfcLeido({texto:'cos:C',id:'0A'})"); time.sleep(.6)
-    check('Rebote (< 0,45 s): se ignora', c == 'ok' and d == 'repetida' and pg.evaluate("(S.hechos.get('P1')||{}).cosechados") == 3, (c, d))
+    a = pg.evaluate("nfcLeido({texto:'R',id:'0A'})"); time.sleep(.6)
+    b = pg.evaluate("nfcLeido({texto:'R',id:'0A'})"); time.sleep(.6)
+    check('R, R con 0,6 s entre pasadas: cuenta 2 (sin depender del retiro)', a == 'ok' and b == 'ok' and pg.evaluate("(S.hechos.get('P1')||{}).racimos") == 2, (a, b))
+    c = pg.evaluate("nfcLeido({texto:'R',id:'0A'})")
+    d = pg.evaluate("nfcLeido({texto:'R',id:'0A'})"); time.sleep(.6)
+    check('Rebote (< 0,45 s): se ignora', c == 'ok' and d == 'repetida' and pg.evaluate("(S.hechos.get('P1')||{}).racimos") == 3, (c, d))
     e = pg.evaluate("nfcLeido({texto:'',id:'0B',motivo:'lectura'})"); time.sleep(.2)
     check('Lectura fallida: avisa «No se leyó bien…» y no registra', e == 'fallida' and 'No se leyó bien' in pg.text_content('#toast'), pg.text_content('#toast'))
     f2 = pg.evaluate("nfcLeido({texto:'',id:'0B',motivo:'lectura'})")

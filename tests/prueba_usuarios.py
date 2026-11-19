@@ -23,7 +23,7 @@ with sync_playwright() as p:
     ad.goto(BASE + '/admin.html'); ad.wait_for_function("typeof entradaUsuario==='function'", timeout=20000)
     # Paquete de prueba (usuarios y contraseñas ficticias)
     paquete = ad.evaluate("""async()=>{const dkRaw=rnd(32),dk=await llaveDatos(dkRaw);const U=[];
-      for(const [u,n,r,extra] of [['admin1','Ana Admin','admin',{cargo:'Coordinadora'}],['op1','Pedro Pérez','operario',{cargo:'Auxiliar de cosecha',labores:['cosecha']}],
+      for(const [u,n,r,extra] of [['admin1','Ana Admin','admin',{cargo:'Coordinadora'}],['op1','Pedro Pérez','operario',{cargo:'Auxiliar de cosecha',labores:['corte','alce']}],
         ['op2','Luis Gómez','operario',{labores:['cosecha']}],['op3','Marta Ruiz','operario',{}],['sup1','Sara Visor','supervisor',{}]])
         U.push(await entradaUsuario(dk,dkRaw,u,n,r,'Clave1234',extra));
       return {formato:FORMATO,id:'prueba-'+Date.now(),creado:new Date().toISOString(),repo:{owner:'x',repo:'y',rama:'main'},kdf:{alg:'PBKDF2-SHA256',iter:ITER},
@@ -35,12 +35,15 @@ with sync_playwright() as p:
     res = ad.inner_text('#eResumen').replace('\n', ' ')
     check('Resumen por rol', 'Usuarios 5' in res and 'Operarios 3' in res and 'Supervisores 1' in res and 'Cirugía' not in res, res)
     filas = lambda: ad.evaluate("[...document.querySelectorAll('#eLista tr')].map(t=>t.innerText.replace(/\\s+/g,' '))")
-    check('Lista con cargo, rol, labor (cosecha) y estado', any('Auxiliar de cosecha' in r and 'Cosecha' in r and 'ACTIVO' in r for r in filas()), filas()[:2])
+    check('Lista con cargo, rol, labores y estado', any('Auxiliar de cosecha Operario Corte de fruto, Alce de fruto en sendero ACTIVO' in r for r in filas()), [r for r in filas() if 'op1' in r])
+    check('Paquete anterior (labor «cosecha») o sin labores = las 4 labores', all('Corte de fruto, Recolección con búfalo, Corte y recolección, Alce de fruto en sendero' in r for r in filas() if r.split(' ')[0] in ('op2', 'op3')))
     ad.fill('#eBuscar', 'pedro'); time.sleep(.2)
     check('Búsqueda', len(filas()) == 1 and 'op1' in filas()[0], filas())
-    ad.fill('#eBuscar', ''); ad.select_option('#eFLab', 'cosecha'); time.sleep(.2)
-    check('Filtro por labor: la cosecha es la única labor (todos)', set(r.split(' ')[0] for r in filas()) == {'admin1', 'op1', 'op2', 'op3', 'sup1'}, [r.split(' ')[0] for r in filas()])
-    check('Filtro por labor sin cirugía ni erradicación', ad.evaluate("[...document.querySelectorAll('#eFLab option')].map(o=>o.value).filter(Boolean).join()") == 'cosecha,inactivo,cambios')
+    ad.fill('#eBuscar', ''); ad.select_option('#eFLab', 'alce'); time.sleep(.2)
+    check('Filtro por labor Alce: todos (op1 la tiene; los demás tienen todas)', set(r.split(' ')[0] for r in filas()) == {'admin1', 'op1', 'op2', 'op3', 'sup1'}, [r.split(' ')[0] for r in filas()])
+    ad.select_option('#eFLab', 'recoleccion'); time.sleep(.2)
+    check('Filtro por labor Recolección: todos menos op1', set(r.split(' ')[0] for r in filas()) == {'admin1', 'op2', 'op3', 'sup1'}, [r.split(' ')[0] for r in filas()])
+    check('Filtro por labor: las 4 labores de cosecha (sin cirugía ni erradicación)', ad.evaluate("[...document.querySelectorAll('#eFLab option')].map(o=>o.value).filter(Boolean).join()") == 'corte,recoleccion,corte_recoleccion,alce,inactivo,cambios')
     ad.select_option('#eFLab', '')
     ad.click('[data-ed="op1"]'); time.sleep(.2)
     check('Admin: el rol «Analista de datos (visor web)» está disponible', 'Analista de datos (permisos de administrador)' in ad.inner_text('#fRol') and 'Analistas de datos' in ad.inner_text('#eFRol'))
@@ -54,14 +57,22 @@ with sync_playwright() as p:
       document.querySelector('#eForm').hidden=true;ED.yo=bak.yo;ED.haySuper=bak.hay;ED.lista=bak.lista;pintarLista();return r;}""")
     check('Super admin: un administrador no gestiona cuentas privilegiadas ni asigna esos roles', '🔒' in sa['adminJefe'] and 'Editar' in sa['adminOp'] and 'Super administrador' not in sa['opcA'] and 'Administrador' not in sa['opcA'] and sa['restr'], sa)
     check('Super admin: el super administrador gestiona todo y asigna cualquier rol', 'Editar' in sa['superJefe'] and 'Super administrador (control total)' in sa['opcS'] and not sa['restrS'], sa)
-    # Editar op1: cargo e identificación (la labor es siempre cosecha)
-    ad.click('[data-ed="op1"]'); check('Formulario: labor única Cosecha, sin cirugía', 'Cosecha (única labor de la App)' in ad.inner_text('#eForm') and not ad.query_selector('#fCir'))
-    ad.fill('#fCargo', 'Cosechero líder'); ad.fill('#fId', '1000000099'); ad.click('#fOk')
-    check('Edición marcada como cambio pendiente', any('op1' in r and 'CAMBIOS' in r and 'Cosechero líder' in r for r in filas()), [r for r in filas() if 'op1' in r])
+    # Editar op1: cargo, identificación y labores
+    ad.click('[data-ed="op1"]')
+    labs = ad.evaluate("[...document.querySelectorAll('#eForm input[name=fLab]')].map(i=>i.value+(i.checked?'*':''))")
+    check('Formulario: casillas de las 4 labores (marcadas las del usuario), sin cirugía', labs == ['corte*', 'recoleccion', 'corte_recoleccion', 'alce*'] and not ad.query_selector('#fCir'), labs)
+    ad.fill('#fCargo', 'Cosechero líder'); ad.fill('#fId', '1000000099')
+    ad.uncheck('#eForm input[name=fLab][value=alce]'); ad.check('#eForm input[name=fLab][value=recoleccion]'); ad.click('#fOk')
+    check('Edición marcada como cambio pendiente', any('op1' in r and 'CAMBIOS' in r and 'Cosechero líder' in r and 'Corte de fruto, Recolección con búfalo ACTIVO' in r for r in filas()), [r for r in filas() if 'op1' in r])
     # Suspender op2, eliminar op3, crear op4
     ad.click('[data-sus="op2"]'); ad.click('[data-del="op3"]')
     ad.click('#eAgregar'); ad.fill('#fU', 'op4'); ad.fill('#fNombre', 'Nuevo Operario'); ad.fill('#fCargo', 'Auxiliar'); ad.fill('#fClave', 'Nueva4567'); ad.click('#fOk')
     check('Estados: suspendido, se eliminará, nuevo', any('op2' in r and 'SUSPENDIDO' in r for r in filas()) and any('op3' in r and 'SE ELIMINARÁ' in r for r in filas()) and any('op4' in r and 'NUEVO' in r for r in filas()))
+    # Validación: al menos una labor
+    ad.click('#eAgregar'); ad.fill('#fU', 'op5'); ad.fill('#fNombre', 'Sin Labor')
+    for l in ('corte', 'recoleccion', 'corte_recoleccion', 'alce'): ad.uncheck(f'#eForm input[name=fLab][value={l}]')
+    ad.click('#fOk')
+    check('Exige al menos una labor', 'al menos una labor' in ad.inner_text('#fMsg'), ad.inner_text('#fMsg')); ad.click('#fNo')
     # Validación: usuario repetido
     ad.click('#eAgregar'); ad.fill('#fU', 'op1'); ad.fill('#fNombre', 'X'); ad.click('#fOk')
     check('No permite usuario repetido', 'ya existe' in ad.inner_text('#fMsg')); ad.click('#fNo')
@@ -85,7 +96,7 @@ with sync_playwright() as p:
       for(const [u,c] of [['op2','Clave1234'],['op1','Clave1234'],['op4','Nueva4567'],['op3','Clave1234']]){try{await ingresar(u,c);o[u]={ok:true,cargo:SES.cargo,id:SES.identificacion,lab:SES.labores};}catch(e){o[u]={ok:false,err:e.message};}}
       return o;}""")
     check('App: usuario suspendido no puede ingresar', not r['op2']['ok'] and 'suspendido' in r['op2']['err'], r['op2'])
-    check('App: usuario editado ingresa con sus nuevos datos', r['op1']['ok'] and r['op1']['cargo'] == 'Cosechero líder' and r['op1']['id'] == '1000000099' and r['op1']['lab'] == ['cosecha'], r['op1'])
+    check('App: usuario editado ingresa con sus nuevos datos', r['op1']['ok'] and r['op1']['cargo'] == 'Cosechero líder' and r['op1']['id'] == '1000000099' and r['op1']['lab'] == ['corte', 'recoleccion'], r['op1'])
     check('App: usuario nuevo ingresa', r['op4']['ok'], r['op4'])
     check('App: usuario eliminado ya no ingresa', not r['op3']['ok'], r['op3'])
     check('Sin errores de JavaScript', not errores, errores[:3])

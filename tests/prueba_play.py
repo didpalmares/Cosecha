@@ -26,21 +26,21 @@ with sync_playwright() as p:
       await dbPutVarios('track',pts);
       await dbPut('jornadas',{id:'JP',estado:'finalizada',sync:'sincronizado',evaluador:'Operario Uno',usuario:'op1',inicio:new Date(t0).toISOString(),fin:new Date(t0+3600e3).toISOString(),
         km:0.33,densidad:115,paradas:[],visita:{ha_recorridas:2.35,palmas_visitadas:270,por_lote:[]},tiempos:{min_efectivo_labor:47},secuencias:[]});
-      const reg=(id,min,x)=>completarPol({id,jornada_id:'JP',palma_id:'P'+id,lote:'IT01',linea:3,numero:min,evaluador:'Operario Uno',labor:'cosecha',
-        cosechados:0,maduros:0,verdes:0,sobremaduros:0,fruto_suelto:0,...x,observaciones:'obs '+id,fotos:[],sync:'sincronizado',creado:new Date(t0+min*60000).toISOString(),lat:1.70+min*0.00005,lng:-78.70});
-      await dbPutVarios('registros',[reg('D1',10,{cosechados:3,maduros:1}),reg('D2',40,{sobremaduros:2,fruto_suelto:1})]);
+      const reg=(id,min,x)=>completarPol({id,jornada_id:'JP',palma_id:'P'+id,lote:'IT01',linea:3,numero:min,evaluador:'Operario Uno',labor:'corte',
+        racimos:0,...x,observaciones:'obs '+id,fotos:[],sync:'sincronizado',creado:new Date(t0+min*60000).toISOString(),lat:1.70+min*0.00005,lng:-78.70});
+      await dbPutVarios('registros',[reg('D1',10,{racimos:3}),reg('D2',40,{racimos:2})]);
       S.registros=await dbAll('registros');recalcUltimo();await abrirPlay('JP');}""")
     res = pg.evaluate("document.querySelector('#plRes').innerText.replace(/\\n/g,' ')")
     check('App: resumen con Inicio, Fin, HA y T. efectivo', all(k in res for k in ('Inicio', 'Fin', 'Hectáreas', '2.35', 'T. efectivo', '0:47')), res)
     pg.select_option('#plVel', '300'); pg.click('#plBtn')
     pg.wait_for_function("!document.querySelector('#plCard').hidden", timeout=15000)
     c1 = pg.evaluate("document.querySelector('#plCard').innerText.replace(/\\n/g,' ')")
-    check('App: ficha automática del 1er registro', '3C + 1M' in c1 and 'IT01' in c1 and 'P10' in c1, c1)
+    check('App: ficha automática del 1er registro', '3R' in c1 and 'IT01' in c1 and 'P10' in c1, c1)
     ta = pg.evaluate('PLAY.t'); time.sleep(1.5); tb = pg.evaluate('PLAY.t')
     check('App: la reproducción se pausa mientras muestra el registro', abs(tb - ta) < 1, (ta, tb))
     time.sleep(4.2); tc = pg.evaluate('PLAY.t')
     check('App: luego continúa sola', tc > tb, tc - tb)
-    pg.wait_for_function("document.querySelector('#plCard').innerText.includes('2S + F')", timeout=20000)
+    pg.wait_for_function("document.querySelector('#plCard').innerText.includes('2R')", timeout=20000)
     check('App: ficha del 2.º registro', True)
     check('App: HA en vivo en el pie', pg.evaluate("document.querySelector('#plHa')!==null"))
     pg.evaluate("detenerPlay()")
@@ -54,21 +54,21 @@ with sync_playwright() as p:
     vz.evaluate("""()=>{document.querySelector('#login').hidden=true;document.querySelector('#app').hidden=false;mapa.invalidateSize();
       window.chunkLote=async()=>[];
       const t0=Date.parse('2026-11-13T13:00:00Z');const c=[],t=[];for(let i=0;i<=60;i++){c.push([-78.70,1.70+i*0.00005]);t.push(t0+i*60000);}
-      const d=(id,min,x)=>({tipo:'diagnostico',id,palma_id:'P'+id,lote:'IT01',linea:3,palma:min,labor:'cosecha',cosechados:0,maduros:0,verdes:0,sobremaduros:0,fruto_suelto:0,...x,evaluador:'Operario Uno',creado:new Date(t0+min*60000).toISOString(),lat:1.70+min*0.00005,lng:-78.70,n_fotos:0});
+      const d=(id,min,x)=>({tipo:'diagnostico',id,palma_id:'P'+id,lote:'IT01',linea:3,palma:min,labor:'corte',racimos:0,...x,evaluador:'Operario Uno',creado:new Date(t0+min*60000).toISOString(),lat:1.70+min*0.00005,lng:-78.70,n_fotos:0});
       const j={id:'JV',fecha:'2026-11-13',evaluador:'Operario Uno',usuario:'op1',inicio:new Date(t0).toISOString(),fin:new Date(t0+3600e3).toISOString(),hora_inicio:'08:00',hora_fin:'09:00',duracion_min:60,
         km:0.33,ha:2.35,palmas:270,metodo:'calle',n_paradas:0,min_paradas:0,min_mov:60,por_lote:[],densidad:115,app:'',lotes:new Set(['IT01']),paradas:[],
         track:{c,t,acc:c.map(()=>4)},header:{},secuencias:null,tiempos:{min_efectivo_labor:47,hora_inicio_labor:'08:05',hora_fin_labor:'08:58'},vel:2};
-      j.diags=[d('V1',10,{cosechados:2,maduros:1}),d('V2',40,{verdes:1})];JOR=[j]; // como en el visor real: los diagnósticos de la jornada no llevan _j
+      j.diags=[d('V1',10,{racimos:3}),d('V2',40,{racimos:1})];JOR=[j]; // como en el visor real: los diagnósticos de la jornada no llevan _j
       abrirDetalle(j);}""")
     vr = vz.evaluate("document.querySelector('.play-res').innerText.replace(/\\n/g,' ')")
     check('Visor: resumen con Inicio, Fin, Ha y T. efectivo', all(k in vr for k in ('Inicio', '08:00', 'Fin', '09:00', '2,35', 'T. efectivo', '0:47')) or all(k in vr for k in ('Inicio', 'Fin', '2.35', '0:47')), vr)
     vz.select_option('#pVel', '600'); vz.click('#pBt')
     vz.wait_for_function("!!document.querySelector('.leaflet-popup-content')", timeout=15000)
     pc = vz.evaluate("document.querySelector('.leaflet-popup-content').innerText.replace(/\\n/g,' ')")
-    check('Visor: ficha automática del registro', '2C + 1M' in pc, pc[:100])
+    check('Visor: ficha automática del registro', '3R' in pc and 'R: Racimos: 3' in pc, pc[:100])
     va = vz.evaluate('PLAY.t'); time.sleep(1.5); vb = vz.evaluate('PLAY.t')
     check('Visor: pausa mientras muestra el registro', abs(vb - va) < 1, (va, vb))
-    vz.wait_for_function("(document.querySelector('.leaflet-popup-content')||{innerText:''}).innerText.includes('V: Racimo verde cortado: 1')", timeout=20000)
+    vz.wait_for_function("(document.querySelector('.leaflet-popup-content')||{innerText:''}).innerText.includes('R: Racimos: 1')", timeout=20000)
     check('Visor: ficha del 2.º registro', True)
     # Foto que tarda en bajar: una sola descarga, la ficha muestra la foto y la pausa son 5 s desde que se ve
     import io, zipfile, base64 as b64

@@ -324,6 +324,7 @@ const polN=d=>d.racimos==null||!LABORES_V.some(x=>x.id===d.labor)?normPol({...d}
 const codPol=d=>polN(d).racimos>0?'R':'';
 const codigosPol=d=>codPol(d)?['R']:[];
 const textoPol=d=>{const q=polN(d);return q.racimos>0?q.racimos+'R':'Sin registro';};
+const FUENTES={boton:'Botón',nfc:'Tarjeta NFC',voz:'Voz',formulario:'Formulario'};
 const fuentePol=d=>{const fs=[...new Set((Array.isArray(d.pasadas)?d.pasadas:[]).map(x=>x.f).filter(Boolean))];return (fs.length?fs:[d.fuente]).filter(Boolean).map(x=>FUENTES[x]||x).join(', ');};
 const codN1=d=>codPol(d)||d.n1_codigo||'';
 function colorD(d){if(!d)return '#999';const x=codPolDe(codPol(d)||d.n1_codigo||'');return x?x.col:'#9e9e9e';}

@@ -72,14 +72,15 @@ with sync_playwright() as p:
     check('Alertas: guía de claves y plantillas', 'SMTP_USER' in guia and 'cosecha_alerta' in guia and 'WA_PHONE_ID' in guia)
     # --- Carga masiva: CSV ---
     csv = os.path.join(TMP, 'usuarios.csv')
-    open(csv, 'w', encoding='utf-8-sig').write('Usuario;Nombre completo;Cargo;Cédula;Rol;Labores;Rol en cirugía;Contraseña;Estado\n'
-        'op1;;Auxiliar líder;;;censo, cirugía;cirujano;;\nop2;Maria Lopez;Auxiliar;123;Operario;Censo;;Clave5678;Activo\nop3;Juan Ruiz;Auxiliar;;Supervisor;;;;\nmal usuario;X;;;;;;;\nop2;Repetido;;;;;;;\n')
+    open(csv, 'w', encoding='utf-8-sig').write('Usuario;Nombre completo;Cargo;Cédula;Rol;Labores;Contraseña;Estado\n'
+        'op1;;Auxiliar líder;;;corte y recolección, alce;;\nop2;Maria Lopez;Auxiliar;123;Operario;Recolección;Clave5678;Activo\nop3;Juan Ruiz;Auxiliar;;Supervisor;;;\nmal usuario;X;;;;;;\nop2;Repetido;;;;;;\n')
     ad.set_input_files('#eImportF', csv); ad.wait_for_timeout(800)
     msg = dl[-1] if dl else ''
     check('CSV: resumen con nuevos, actualizados y errores', '2 usuario(s) nuevo(s)' in msg and '1 usuario(s) existente(s)' in msg and '2 fila(s) con error' in msg, msg[:200])
     filas = ad.evaluate("[...document.querySelectorAll('#eLista tr')].map(t=>t.innerText.replace(/\\s+/g,' '))")
-    check('CSV: aplica los cambios (nuevos y existente actualizado)', any('op2' in r and 'MARIA LOPEZ' in r and 'NUEVO' in r for r in filas) and any('op3' in r and 'Supervisor' in r for r in filas)
-          and any('op1' in r and 'Auxiliar líder' in r and 'Cirugía (cirujano)' in r and 'CAMBIOS' in r for r in filas), filas)
+    check('CSV: aplica los cambios (nuevos y existente actualizado, columna «labores»)', any('op2' in r and 'MARIA LOPEZ' in r and 'Operario Recolección con búfalo NUEVO' in r for r in filas)
+          and any('op3' in r and 'Supervisor' in r for r in filas)
+          and any('op1' in r and 'Auxiliar líder' in r and 'Operario Corte y recolección, Alce de fruto en sendero ACTIVO' in r and 'CAMBIOS' in r for r in filas), filas)
     # --- Excel ---
     from openpyxl import Workbook
     wb = Workbook(); ws = wb.active; ws.append(['usuario', 'nombre', 'rol', 'estado']); ws.append(['op4', 'Laura Gil', 'operario', '']); ws.append(['op1', '', '', 'Suspendido'])

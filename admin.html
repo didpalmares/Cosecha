@@ -578,7 +578,7 @@ function enlazarEditor(){
 }
 function validarRamas(){
   const G=gruposRamas();const cods=new Set();
-  for(const g of G){if(!/^[A-Z0-9]{2,6}$/.test(g.c))throw new Error(`Código «${g.c}» no válido: use de 2 a 6 letras o números.`);if(cods.has(g.c))throw new Error(`El código «${g.c}» está repetido.`);cods.add(g.c);
+  for(const g of G){if(!/^[A-Z0-9]{1,6}$/.test(g.c))throw new Error(`Código «${g.c}» no válido: use de 1 a 6 letras o números.`);if(cods.has(g.c))throw new Error(`El código «${g.c}» está repetido.`);cods.add(g.c);
     if(!g.n1)throw new Error(`Falta el nombre de la enfermedad con código ${g.c}.`);
     if(g.ops.length>1&&g.ops.some(o=>!o.n2))throw new Error(`«${g.n1}» tiene varias opciones: todas deben tener nombre.`);
     const k=new Set();for(const o of g.ops){const x=(o.n2||'')+'|'+(o.n3||'');if(k.has(x))throw new Error(`«${g.n1}»: la opción «${o.n2||'(sin opción)'}» está repetida con el mismo seguimiento.`);k.add(x);}}

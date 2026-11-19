@@ -34,8 +34,8 @@ def gh(route):
         g = EST['guardado']; feats = []
         for k, x in enumerate(g['palmas'][:2]):  # el auditor registra 2 palmas: una coincide y otra no
             o = x['original']
-            pr = {**{c: o[c] for c in ('cosechados', 'maduros', 'verdes', 'sobremaduros', 'fruto_suelto')}, 'n1_codigo': o['codigo'], 'nivel1': o['resumen']} if k == 0 \
-                else {'cosechados': 0, 'maduros': 0, 'verdes': 1, 'sobremaduros': 0, 'fruto_suelto': 0, 'n1_codigo': 'V', 'nivel1': '1V'}
+            pr = {'racimos': o['racimos'], 'labor': o['labor'], 'n1_codigo': o['codigo'], 'nivel1': o['resumen']} if k == 0 \
+                else {'racimos': 9, 'labor': 'corte', 'n1_codigo': 'R', 'nivel1': '9R'}
             feats.append({'type': 'Feature', 'geometry': {'type': 'Point', 'coordinates': [x['lng'], x['lat']]}, 'properties': {'tipo': 'diagnostico', 'palma_id': x['palma_id'], **pr, 'creado': iso(AHORA), 'auditoria': g['id']}})
         return route.fulfill(status=200, content_type='application/json', body=json.dumps({'type': 'FeatureCollection', 'jornada': {'usuario': 'sup1', 'evaluador': 'Sara Supervisora'}, 'features': feats}))
     if '/contents/reportes?' in u: return route.fulfill(status=200, content_type='application/json', body=json.dumps([{'type': 'dir', 'name': '2026-S45', 'sha': 'rep45'}]))
@@ -43,18 +43,19 @@ def gh(route):
     route.fulfill(status=404, content_type='application/json', body='{"message":"Not Found"}')
 DATOS = """()=>{document.querySelector('#login').hidden=true;document.querySelector('#app').hidden=false;mapa.invalidateSize();window.chunkLote=async()=>[];
   SES={u:'admin1',nombre:'Admin',rol:'admin',token:'tok',repo:{owner:'didpalmares',repo:'CosechaData',rama:'main'}};
-  USUARIOS_PAQ=[{u:'1000000001',nombre:'GOMEZ PEREZ ANDRES',rol:'operario',labores:['cosecha']},{u:'1000000002',nombre:'LOPEZ DIAZ CARLOS',rol:'operario',labores:['cosecha']},
-    {u:'1000000003',nombre:'MORA RUIZ JAVIER',rol:'operario',labores:['cosecha']},{u:'sup1',nombre:'Sara Supervisora',rol:'supervisor'},{u:'x9',nombre:'Suspendido',rol:'operario',inactivo:true}];
-  const hoy=hoyISO();const mk=(id,u,nom,fecha,regs)=>{const t0=Date.parse(fecha+'T07:00:00-05:00');const c=[],t=[];for(let i=0;i<=60;i++){c.push([-78.70,1.50+i*0.0001]);t.push(t0+i*60000);}
-    const ds=regs.map((x,k)=>normPol({tipo:'diagnostico',id:id+'d'+k,palma_id:id+'P'+k,lote:x.lote||'IT01',linea:3,palma:k+1,labor:'cosecha',cosechados:x.c??2,maduros:x.m??1,verdes:x.v??0,sobremaduros:x.sm??0,fruto_suelto:x.fs??0,fuente:'boton',
+  USUARIOS_PAQ=[{u:'1000000001',nombre:'GOMEZ PEREZ ANDRES',rol:'operario',labores:['corte']},{u:'1000000002',nombre:'LOPEZ DIAZ CARLOS',rol:'operario',labores:['recoleccion']},
+    {u:'1000000003',nombre:'MORA RUIZ JAVIER',rol:'operario',labores:['corte']},{u:'sup1',nombre:'Sara Supervisora',rol:'supervisor'},{u:'x9',nombre:'Suspendido',rol:'operario',inactivo:true}];
+  const hoy=hoyISO();const mk=(id,u,nom,fecha,regs,labor='corte',descargues=[])=>{const t0=Date.parse(fecha+'T07:00:00-05:00');const c=[],t=[];for(let i=0;i<=60;i++){c.push([-78.70,1.50+i*0.0001]);t.push(t0+i*60000);}
+    const ds=regs.map((x,k)=>normPol({tipo:'diagnostico',id:id+'d'+k,palma_id:id+'P'+k,lote:x.lote||'IT01',linea:3,palma:k+1,labor,racimos:x.r??2,fuente:'boton',
       transitabilidad:'Transitable',evaluador:nom,creado:new Date(t0+(x.min??(5+k*3))*60000+(x.s||0)*1000).toISOString(),lat:1.50+k*0.0002,lng:-78.70,n_fotos:0,fotos:'',dist_gps_palma_m:x.dist||3,gps_precision_m:x.prec||5}));
-    const j={id,fecha,evaluador:nom,usuario:u,inicio:new Date(t0).toISOString(),fin:new Date(t0+60*60000).toISOString(),hora_inicio:'07:00',hora_fin:'08:00',duracion_min:60,km:1.2,ha:2.5,palmas:280,metodo:'calle',
+    const j={id,fecha,labor,descargues,alces:[],evaluador:nom,usuario:u,inicio:new Date(t0).toISOString(),fin:new Date(t0+60*60000).toISOString(),hora_inicio:'07:00',hora_fin:'08:00',duracion_min:60,km:1.2,ha:2.5,palmas:280,metodo:'calle',
       n_paradas:1,min_paradas:10,min_mov:50,por_lote:[{lote:'IT01',palmas_visitadas:280,ha:2.5}],densidad:115,app:'',lotes:new Set(['IT01']),paradas:[],track:{c,t,acc:c.map(()=>4)},header:{},secuencias:null,tiempos:{min_efectivo_labor:50},vel:2,
       transito:[{lote:'IT01',entrada:'Transitable',t_entrada:new Date(t0+60000).toISOString(),salida:'Poco transitable',t_salida:new Date(t0+59*60000).toISOString()}],diags:ds};
     ds.forEach(d=>d._j=j);return j;};
   const lejos={dist:40},imp={prec:30};
-  JOR=[mk('J1','1000000001','GOMEZ PEREZ ANDRES',hoy,[{},{...lejos,c:1},{...imp,sm:2},{c:0,m:0,fs:1},{min:20,c:3},{min:20,s:2,m:2}]),
-       mk('J2','1000000002','LOPEZ DIAZ CARLOS',hoy,[...Array(16)].map((_,k)=>({c:1,m:0,min:5+k*2}))),
+  JOR=[mk('J1','1000000001','GOMEZ PEREZ ANDRES',hoy,[{},{...lejos,r:1},{...imp,r:4},{r:3},{min:20,r:5},{min:20,s:2,r:6}]),
+       mk('J2','1000000002','LOPEZ DIAZ CARLOS',hoy,[...Array(16)].map((_,k)=>({r:1,min:5+k*2})),'recoleccion',
+         [{id:'d1',n:1,racimos:16,t:new Date().toISOString(),hora:'08:00',lat:1.506,lng:-78.70,acc:3,lote:'IT01',fuente:'nfc'}]),
        mk('J3','1000000003','MORA RUIZ JAVIER',hoyISO(new Date(Date.now()-40*86400000)),[{lote:'IT05'}])];
   JOR[2].por_lote=[{lote:'IT05',palmas_visitadas:100,ha:1}];JOR[2].lotes=new Set(['IT05']);JOR[2].transito=[];
   LOTES={type:'FeatureCollection',features:['IT01','IT05','IT09'].map((l,k)=>({type:'Feature',properties:{_lote:l},geometry:{type:'Polygon',coordinates:[[[-78.701+k*0.01,1.499],[-78.699+k*0.01,1.499],[-78.699+k*0.01,1.512],[-78.701+k*0.01,1.512],[-78.701+k*0.01,1.499]]]}}))};IND_LOTES={IT01:{n:1000},IT05:{n:800},IT09:{n:500}};
@@ -72,7 +73,7 @@ with sync_playwright() as p:
     txt = lambda: vz.inner_text('#gerPanel')
     T = txt()
     check('Gerencia abre con el Tablero', 'GERENCIA' in T and 'PRODUCTIVIDAD POR OPERARIO' in T.upper(), T[:80])
-    check('Tablero: KPIs de la cosecha (sin enfermedades)', 'Jornadas' in T and 'Palmas registradas' in T and 'Racimos cortados (C + V + S)' in T and 'Inflorescencias' not in T and 'PC' not in T and 'Diagnósticos' not in T)
+    check('Tablero: KPIs de la cosecha (sin enfermedades)', 'Jornadas' in T and 'Palmas registradas' in T and 'Racimos (R) en palma' in T and 'Inflorescencias' not in T and 'PC' not in T and 'Diagnósticos' not in T)
     check('Tablero: productividad por operario (ha/hora)', vz.evaluate("[...document.querySelectorAll('#gerPanel table')][0].innerText").count('\n') >= 3)
     ciclo = vz.evaluate("[...document.querySelectorAll('#gerPanel table')].pop().innerText")
     check('Ciclo de cosecha: IT05 con 40 días (alerta) e IT09 sin cosecha', '40 días' in ciclo and 'Sin cosecha en el periodo' in ciclo, ciclo.replace('\n', ' | ')[:200])
@@ -80,7 +81,9 @@ with sync_playwright() as p:
     check('Tablero: sin textos de censo ni enfermedades', 'censo' not in T.lower() and 'enfermedad' not in T.lower())
     vz.click('[data-tsub=pol]'); time.sleep(.8)
     K = vz.inner_text('#polKpis')
-    check('Sección 🌴 Cosecha: KPIs', 'Palmas registradas' in K and 'Total C: Racimo cosechado' in K and 'Total V: Racimo verde cortado' in K and '% Verdes cortados' in K and '% Maduros dejados' in K and 'Palmas F: Fruto suelto sin recoger' in K, re.sub(r'\s+', ' ', K)[:200])
+    K = re.sub(r'\s+', ' ', K)
+    check('Sección 🌴 Cosecha: KPIs (palmas con R, R por labor, viajes D y alce)', '23 Palmas con R' in K and '23 R · Corte de fruto' in K and '16 R · Recolección con búfalo' in K
+          and '1 Viajes descargados (D)' in K and '16 R descargados' in K and 'R alzados' in K, K[:300])
     vz.click('[data-tsub=resumen]'); time.sleep(.3)
     check('Módulos: Gerencia con Tablero, Reportes y Sincronización', [b.inner_text() for b in vz.query_selector_all('#gerPanel [data-gt]')] == ['TABLERO', 'REPORTES', 'SINCRONIZACIÓN'])
     vz.click('#btCoord'); time.sleep(.5)
@@ -105,7 +108,7 @@ with sync_playwright() as p:
     vz.select_option('#calTipo', 'lejos'); time.sleep(.3)
     n = vz.evaluate("[...document.querySelectorAll('#gerPanel [data-rev]')].length")
     check('Calidad: filtro por motivo', n == 1, n)
-    check('Calidad: la alerta muestra el registro (1C + 1M)', '1C + 1M' in txt(), re.sub(r'\s+', ' ', txt())[-300:])
+    check('Calidad: la alerta muestra el registro (1R)', re.search(r'\b1R\b', txt()) is not None, re.sub(r'\s+', ' ', txt())[-300:])
     vz.evaluate("document.querySelector('#gerPanel [data-rev]').click()"); time.sleep(.3)
     check('Calidad: marcar como revisada la oculta', vz.evaluate("[...document.querySelectorAll('#gerPanel [data-rev]')].length") == 0)
     # Auditoría
@@ -116,13 +119,15 @@ with sync_playwright() as p:
     ops = {x['original']['usuario'] for x in m['palmas']}
     check('Auditoría: muestra solo de operarios, por operario', len(m['palmas']) >= 4 and ops <= {'1000000001', '1000000002', '1000000003'} and len(ops) >= 2, (len(m['palmas']), ops))
     check('Auditoría: sin palmas repetidas', len({x['palma_id'] for x in m['palmas']}) == len(m['palmas']))
-    check('Auditoría: el original lleva código, resumen y conteos', all(x['original'].get('codigo') and x['original'].get('resumen') and all(c in x['original'] for c in ('cosechados', 'maduros', 'verdes', 'sobremaduros', 'fruto_suelto')) for x in m['palmas']), m['palmas'][0]['original'])
+    check('Auditoría: el original lleva código R, resumen, labor y racimos', all(x['original'].get('codigo') == 'R' and x['original'].get('resumen') == str(x['original'].get('racimos')) + 'R'
+          and x['original'].get('labor') in ('corte', 'recoleccion') for x in m['palmas']), m['palmas'][0]['original'])
     vz.click('#audGuardar'); vz.wait_for_function("GER.aud.guardada", timeout=10000)
     check('Auditoría: se guarda en auditoria/ del repositorio de datos', EST['guardado'] and EST['guardado']['id'] == m['id'] and '/contents/auditoria/' + m['id'] in EST['puts'][0], EST['puts'][:1])
     vz.wait_for_function("GER.aud.lista&&GER.aud.lista.length", timeout=10000); time.sleep(.3)
     vz.click('#audVer'); vz.wait_for_function("!!GER.aud.res", timeout=15000); time.sleep(.3); T = txt()
-    check('Auditoría: avance (2 auditadas) y concordancia 50 %', vz.evaluate("GER.aud.res.filas.filter(x=>x.hecha).length") == 2 and '50 %' in T and 'Concordancia en el código' in T, re.sub(r'\s+', ' ', T)[-300:])
-    check('Auditoría: lista la diferencia (el auditor registró 1V)', 'DIFERENCIAS (1)' in T.upper() and '1V' in T, re.sub(r'\s+', ' ', T)[-300:])
+    check('Auditoría: avance (2 auditadas), código 100 % y conteo 50 %', vz.evaluate("GER.aud.res.filas.filter(x=>x.hecha).length") == 2 and '100 %' in T and '50 %' in T and 'Concordancia en el código' in T, re.sub(r'\s+', ' ', T)[-300:])
+    check('Auditoría: lista la diferencia (el auditor registró 9R)', 'DIFERENCIAS (1)' in T.upper() and '9R' in T, re.sub(r'\s+', ' ', T)[-300:])
+    check('Auditoría: textos sin los códigos de Polinización (A, P, B)', '(A, P, B)' not in T and 'A, P y B' not in T, re.findall(r'[^.]*A, P[^.]*', T)[:2])
     # Reportes
     vz.click('[data-gt=reportes]'); vz.wait_for_function("GER.reportes&&GER.reportes.semanales.length", timeout=10000); time.sleep(.3); T = txt()
     check('Reportes: lista semanas con PDF y Excel', '2026-S45' in T and 'PDF' in T and 'Excel' in T and 'Generar y enviar' in T)
@@ -133,23 +138,23 @@ with sync_playwright() as p:
     pal = EST['guardado']['palmas'][0]
     r = pg.evaluate("""async(pal)=>{try{ return await (async()=>{document.querySelector('#login').hidden=true;SES={u:'sup1',nombre:'Sara',rol:'supervisor'};S.cfg.gh={...S.cfg.gh,token:'tok',owner:'didpalmares',repo:'CosechaData',rama:'main'};
       await cargarAuditoria();menu();const tile=!!document.querySelector('#mAud');
-      const j={id:'JA',labor:'cosecha',estado:'activa',evaluador:'Sara',usuario:'sup1',inicio:new Date().toISOString(),seleccion:[{lote:pal.lote}],densidad:115,buffer:5,km:0,sync:'pendiente',
+      const j={id:'JA',labor:'corte',estado:'activa',evaluador:'Sara',usuario:'sup1',inicio:new Date().toISOString(),seleccion:[{lote:pal.lote}],densidad:115,buffer:5,km:0,sync:'pendiente',
         transito:[{lote:String(pal.lote),entrada:'Transitable',t_entrada:new Date().toISOString(),salida:'',t_salida:''}]};await dbPut('jornadas',j);S.jornada=j;
       S.idx.set(pal.palma_id,{type:'Feature',geometry:{type:'Point',coordinates:[pal.lng,pal.lat]},properties:{_id:pal.palma_id,_lote:pal.lote,_linea:pal.linea,_num:pal.palma}});
       S.gps={lat:pal.lat+0.00003,lng:pal.lng,acc:4,t:Date.now()};
       await panelAuditoria();const txt=document.querySelector('#hojaCuerpo').innerText;
       abrirPalma(pal.palma_id);const ficha=document.querySelector('#hojaCuerpo').innerText;
       await abrirFormulario({palma_id:pal.palma_id});const frm=document.querySelector('#frm');if(!frm)return {err:'sin formulario',h:document.querySelector('#hojaCuerpo').innerText.slice(0,200),toast:document.querySelector('#toast').textContent};
-      const mas=frm.querySelector('[data-mas=cosechados]');if(!mas)return {err:'sin botón C'};mas.click();mas.click();
+      const mas=frm.querySelector('[data-mas=racimos]');if(!mas)return {err:'sin botón R'};mas.click();mas.click();
       await guardarRegistro(frm);
       const reg=S.registros.find(x=>x.palma_id===pal.palma_id);
       return {tile,ciega:!txt.includes(pal.original.resumen||'@@')&&!txt.includes(pal.original.evaluador),cuenta:txt.toUpperCase().includes('PALMAS'),ficha:ficha.includes('Palma de la auditoría'),
-        tag:reg&&reg.auditoria,plano:planos(reg).auditoria,c:reg&&reg.cosechados,fuente:reg&&reg.fuente};})();}catch(e){return {err:e.message,stack:String(e.stack).slice(0,600)};}}""", pal)
+        tag:reg&&reg.auditoria,plano:planos(reg).auditoria,c:reg&&reg.racimos,fuente:reg&&reg.fuente};})();}catch(e){return {err:e.message,stack:String(e.stack).slice(0,600)};}}""", pal)
     print('     app:', {k: v for k, v in r.items() if k in ('err', 'h', 'toast', 'stack')})
     check('App: menú «Auditoría» para supervisor', r.get('tile'))
     check('App: lista a ciegas (sin registro ni operario original)', r.get('ciega') and r.get('cuenta'))
     check('App: ficha de la palma avisa que es de auditoría', r.get('ficha'))
-    check('App: el registro (2C, formulario) queda marcado con la muestra (también al sincronizar)', r.get('tag') == EST['guardado']['id'] and r.get('plano') == EST['guardado']['id'] and r.get('c') == 2 and r.get('fuente') == 'formulario', r)
+    check('App: el registro (2R, formulario) queda marcado con la muestra (también al sincronizar)', r.get('tag') == EST['guardado']['id'] and r.get('plano') == EST['guardado']['id'] and r.get('c') == 2 and r.get('fuente') == 'formulario', r)
     op = pg.evaluate("async()=>{SES={u:'op',nombre:'Op',rol:'operario'};AUD.m=null;await cargarAuditoria();menu();return !!document.querySelector('#mAud')}")
     check('App: un operario no ve la auditoría', not op)
     # Rol analista de datos: tiene los permisos de administrador (ve todos los módulos)

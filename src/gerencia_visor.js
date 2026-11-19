@@ -311,13 +311,13 @@ function pintarAuditoria(){
     const pct=(a,b)=>b?a/b*100:null,chip=v=>v==null?'—':`<span class="ger-chip ${v>=90?'ok':v>=75?'med':'mal'}">${num(v,0)} %</span>`;
     const tot1=pct(h.filter(x=>x.c1).length,h.length),tot2=pct(h.filter(x=>x.c2).length,h.length);
     res=`<div class="ger-kpis">${kpi(num(F.length),'Palmas en la muestra')}${kpi(num(h.length),'Auditadas',h.length===F.length?'ok':'med')}${kpi(num(F.length-h.length),'Pendientes')}
-        ${kpi(tot1==null?'—':num(tot1,0)+' %','Concordancia en el código',tot1==null?'':tot1>=90?'ok':tot1>=75?'med':'mal')}${kpi(tot2==null?'—':num(tot2,0)+' %','Concordancia en el conteo (A, P, B)',tot2==null?'':tot2>=90?'ok':tot2>=75?'med':'mal')}</div>
+        ${kpi(tot1==null?'—':num(tot1,0)+' %','Concordancia en el código',tot1==null?'':tot1>=90?'ok':tot1>=75?'med':'mal')}${kpi(tot2==null?'—':num(tot2,0)+' %','Concordancia en el conteo de racimos (R)',tot2==null?'':tot2>=90?'ok':tot2>=75?'med':'mal')}</div>
       <div class="ger-sec"><h3>Concordancia por operario</h3>${tablaGer([{t:'Operario',f:x=>esc(x.nombre)},{t:'Auditadas',n:1,f:x=>num(x.n)},{t:'Mismo código',n:1,f:x=>chip(pct(x.c1,x.n))},{t:'Mismo conteo',n:1,f:x=>chip(pct(x.c2,x.n))}],
         [...porOp.values()].sort((a,b)=>(pct(a.c1,a.n)||0)-(pct(b.c1,b.n)||0)))}</div>
       <div class="ger-sec"><h3>Diferencias (${num(h.filter(x=>!x.c2).length)})</h3>${tablaGer([{t:'Palma',f:x=>`<b>${esc(x.o.lote)} · L${esc(x.o.linea??'?')} · P${esc(x.o.palma??'?')}</b>`},
         {t:'El operario registró',f:x=>esc(x.o.original.resumen||x.o.original.codigo||x.o.original.n1_codigo||'—')},{t:'El auditor registró',f:x=>esc(x.a.resumen||x.a.n1||'—')},
         {t:'Operario',f:x=>esc(x.o.original.evaluador)},{t:'Auditor',f:x=>esc(x.a.auditor)},{t:'Fecha auditoría',f:x=>esc(x.a.fecha)}],h.filter(x=>!x.c2))}</div>`;}
-  return `<p class="tenue">El supervisor vuelve a registrar una muestra aleatoria de palmas <b>sin ver el registro original</b>. La concordancia mide qué tanto coinciden operario y auditor (código y conteo de A, P y B).</p>
+  return `<p class="tenue">El supervisor vuelve a registrar una muestra aleatoria de palmas <b>sin ver el registro original</b>. La concordancia mide qué tanto coinciden operario y auditor (código y conteo de racimos R).</p>
     <div class="ger-sec"><h3>1. Generar una muestra</h3>${gen}</div><div class="ger-sec"><h3>2. Muestras guardadas</h3>${lista}${res}</div>`;
 }
 ENLACES_GER.auditoria=()=>{enlazarRango();const A=GER.aud;
@@ -733,7 +733,7 @@ function barraFiltrosGer(){
       <label class="gf" style="flex:0 0 auto">Hasta<input type="date" id="gHasta" value="${esc($('#fHasta').value||'')}"></label>
       <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn mini" data-gd="0">Hoy</button><button class="btn mini" data-gd="6">7 días</button><button class="btn mini" data-gd="29">30 días</button><button class="btn mini" data-gd="89">90 días</button><button class="btn mini" data-gd="mes">Este mes</button>
         <button class="btn mini prim" id="gCargar">CARGAR</button>${hay?'<button class="btn mini" id="gLimpiar" title="Quitar todos los filtros (no cambia las fechas)">✕ Quitar filtros</button>':''}</div></div>
-    <div class="gf-fila">${ms('prog','Programa')}${ms('lote','Lote')}${ms('op','Operario')}${ms('cod','Código')}</div>
+    <div class="gf-fila">${ms('prog','Programa')}${ms('lote','Lote')}${ms('op','Operario')}${ms('cod','Labor')}</div>
     <div class="gf-res" id="gfRes">${esc(rangoTxt())} · <b>${num(JORF.length)}</b> jornadas · <b>${num(DIAGF.length)}</b> registros de cosecha con los filtros</div></div>`;
 }
 function enlazarFiltrosGer(){

@@ -22,12 +22,15 @@ En Windows se puede usar Edge en lugar de Chromium: `set PW_CANAL=msedge`.
 Si la app se sirve en otra dirección, indíquela con `PRUEBAS_URL` (por ejemplo `PRUEBAS_URL=http://127.0.0.1:8799`);
 sin ella se usa `http://127.0.0.1:8765`, la de GitHub Actions.
 
-`prueba_visor_cosecha.py` recorre la cosecha de punta a punta: la App arma el GeoJSON de la jornada (C, M, V, S, F,
-racimos, fuente, pasadas y transitabilidad de cada lote), el visor lo lee y se verifican colores, leyenda, ficha, filtro por código,
-indicadores de Gerencia (🌴 Cosecha: racimos cortados, % verdes, % maduros dejados), tabla por lote y transitabilidad por lote.
+`prueba_cosecha.py` prueba las labores en la App (Corte, Recolección con búfalo, Corte y recolección y Alce de fruto en sendero),
+y `prueba_visor_cosecha.py` recorre la cosecha de punta a punta: la App arma el GeoJSON de tres jornadas (Corte, Recolección con
+descargues y Alce con acopios, con fuente, pasadas y transitabilidad de cada lote), el visor lo lee y se verifican colores, leyenda,
+ficha, filtro por labor, indicadores de Gerencia (🌴 Cosecha: R por labor, viajes descargados, R alzados, pendiente de alce),
+tabla por lote, mapa de acopios y transitabilidad por lote.
 
-Códigos de cosecha que usan las pruebas: C = racimo cosechado, M = racimo maduro dejado sin cortar, V = racimo verde cortado,
-S = racimo sobremaduro / podrido (se cuentan y se combinan) y F = fruto suelto sin recoger (máximo 1 por palma). Las tarjetas NFC
-llevan el texto «cos:C», «cos:M», etc.; una tarjeta sin el prefijo (por ejemplo «V» o «pol:A» de Polinización) se rechaza.
+Códigos de cosecha que usan las pruebas: R = racimo (en Corte, Recolección y Corte y recolección se suma a la palma más cercana;
+en Alce, al acopio del sendero) y D = descargue del viaje (Recolección y Corte y recolección; se confirma con una segunda pasada
+en 8 s o menos y guarda los racimos del viaje). Las tarjetas NFC llevan el texto «R» o «D» (también se acepta «cos:R»); cualquier
+otra tarjeta (por ejemplo «C», «V» o «pol:A» de Polinización) se rechaza. Por voz: «racimo» / «erre» y «descargue».
 
 Los datos de las pruebas son ficticios (nombres, cédulas y el polígono de `fixtures/` no son reales).

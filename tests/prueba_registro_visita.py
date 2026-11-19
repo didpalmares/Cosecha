@@ -35,15 +35,15 @@ with sync_playwright() as p:
       cajasLotes();LFEAT.clear();IDXV.clear();CARTO.lotes={T1:{n:rows.length}};cacheChunk.set('T1',rows);KX=0;
       S.palmas={type:'FeatureCollection',features:rows.map(r=>({type:'Feature',geometry:{type:'Point',coordinates:[r[4],r[5]]},properties:{_id:String(r[0]),_lote:'T1',_linea:r[1],_num:r[2],_existe:true}}))};
       S.idx=new Map(S.palmas.features.map(f=>[f.properties._id,f]));try{indexar()}catch(e){}
-      S.jornada={id:'J1',evaluador:'Op',estado:'activa',seleccion:[],inicio:new Date().toISOString(),labor:'cosecha',densidad:115,buffer:5,metodoVisita:'calle',bufferTerraza:8,
+      S.jornada={id:'J1',evaluador:'Op',estado:'activa',seleccion:[],inicio:new Date().toISOString(),labor:'corte',densidad:115,buffer:5,metodoVisita:'calle',bufferTerraza:8,
         transito:[{lote:'T1',entrada:'Transitable',t_entrada:new Date().toISOString(),salida:'',t_salida:''}]};
       VIS=nuevoEstadoVisita(115,5,'calle',8);actualizarJornadaUI();
       // Junto a la palma 13 (línea 2, palma 1: y=15 m, x=8,7 m), sin recorrido
       S.gps={lat:lat0+15/ky,lng:lng0+8.7/kx,acc:4,t:Date.now()};
     }""")
     check('Palma 13 no visitada antes de registrar', not pg.evaluate("VIS.set.has('13')"))
-    pg.evaluate("sumarCodigo('C','boton')"); time.sleep(.6)
-    check('Registrada en vivo: cuenta como visitada', pg.evaluate("VIS.set.has('13')") and pg.evaluate("(S.hechos.get('13')||{}).cosechados") == 1)
+    pg.evaluate("sumarCodigo('R','boton')"); time.sleep(.6)
+    check('Registrada en vivo: cuenta como visitada', pg.evaluate("VIS.set.has('13')") and pg.evaluate("(S.hechos.get('13')||{}).racimos") == 1)
     check('Contador de visitadas suma 1', pg.text_content('#pjVis').strip() in ('1',), pg.text_content('#pjVis'))
     # Recalcular la jornada sin recorrido: la registrada sigue como visitada (solo ella)
     r = pg.evaluate("""async()=>{const regs=S.registros.filter(r=>r.jornada_id==='J1');const E=await calcularVisita([],115,5,'calle',true,true,null,8,regs);

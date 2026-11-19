@@ -105,7 +105,7 @@ with sync_playwright() as p:
       SES={u:'admin1',nombre:'Admin',rol:'admin',token:'tok',repo:{owner:'didpalmares',repo:'CosechaData',rama:'main'}};
       USUARIOS_PAQ=[{u:'op1',nombre:'PEDRO PEREZ',rol:'operario',labores:['cosecha']},{u:'op2',nombre:'MARIA LOPEZ',rol:'operario',labores:['cosecha']},{u:'sup1',nombre:'Sara',rol:'supervisor'},{u:'x',nombre:'Susp',rol:'operario',inactivo:true}];
       const hoy=hoyISO();const mk=(id,u,nom,fecha,lote,pid)=>{const t0=Date.parse(fecha+'T07:00:00-05:00');const c=[],t=[];for(let i=0;i<=60;i++){c.push([-78.70,1.50+i*0.0001]);t.push(t0+i*60000);}
-        const ds=[{tipo:'diagnostico',id:id+'d',palma_id:pid,lote,linea:3,palma:1,labor:'cosecha',cosechados:id==='J2'?0:2,maduros:0,verdes:0,sobremaduros:id==='J2'?1:0,fruto_suelto:0,evaluador:nom,creado:new Date(t0+600000).toISOString(),lat:1.5,lng:-78.70,n_fotos:0}];
+        const ds=[{tipo:'diagnostico',id:id+'d',palma_id:pid,lote,linea:3,palma:1,labor:'corte',racimos:id==='J2'?1:2,evaluador:nom,creado:new Date(t0+600000).toISOString(),lat:1.5,lng:-78.70,n_fotos:0}];
         const j={id,fecha,evaluador:nom,usuario:u,inicio:new Date(t0).toISOString(),fin:new Date(t0+3600000).toISOString(),hora_inicio:'07:00',hora_fin:'08:00',duracion_min:60,km:1,ha:8,palmas:900,metodo:'calle',
           n_paradas:0,min_paradas:0,min_mov:60,por_lote:[{lote,palmas_visitadas:900,ha:8}],densidad:115,app:'',lotes:new Set([lote]),paradas:[],track:{c,t,acc:c.map(()=>4)},header:{},secuencias:null,tiempos:{min_efectivo_labor:60},vel:2,diags:ds};
         ds.forEach(d=>d._j=j);return j;};
@@ -154,7 +154,7 @@ with sync_playwright() as p:
     check('Visor: muestra «Reporte listo» con sus archivos', 'REPORTE LISTO' in vz.inner_text('#gerPanel').upper() and EST['sol'][-1]['envio'] == 'ninguno', vz.evaluate('JSON.stringify({l:GER.rm.listo,p:GER.rm.pend,t:GER.tab})')[:300])
     vz.click('#gerX'); vz.wait_for_timeout(200)
     h = vz.evaluate("async()=>{const d=JOR[1].diags[0];await verHistoriaPalma(d);return document.querySelector('#hvCuerpo').innerText}")
-    check('Visor: hoja de vida de la palma con sus registros de cosecha (lo más reciente primero)', h.count('Cosecha') == 2 and h.index('1S') < h.index('2C'), h[:200])
+    check('Visor: hoja de vida de la palma con sus registros de cosecha (lo más reciente primero)', h.count('Cosecha') == 2 and '1R' in h and '2R' in h and h.index('1R') < h.index('2R'), h[:200])
     check('Sin errores de JavaScript', not errores, errores[:4])
     nav.close()
 print('\nRESULTADO:', 'TODO OK' if ok else 'HAY FALLAS'); sys.exit(0 if ok else 1)
