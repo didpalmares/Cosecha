@@ -1,0 +1,103 @@
+{
+ "formato": "cosecha-ramas-1",
+ "version": "incorporado",
+ "ramas": [
+  {
+   "r": 1,
+   "c": "C",
+   "n1": "C: Racimo cosechado",
+   "n2": null,
+   "n3": null,
+   "s": [],
+   "h": null,
+   "cir": false,
+   "prod": false,
+   "rai": false,
+   "tra": false,
+   "obs": true,
+   "f": ""
+  },
+  {
+   "r": 2,
+   "c": "M",
+   "n1": "M: Racimo maduro dejado sin cortar",
+   "n2": null,
+   "n3": null,
+   "s": [],
+   "h": null,
+   "cir": false,
+   "prod": false,
+   "rai": false,
+   "tra": false,
+   "obs": true,
+   "f": ""
+  },
+  {
+   "r": 3,
+   "c": "V",
+   "n1": "V: Racimo verde cortado",
+   "n2": null,
+   "n3": null,
+   "s": [],
+   "h": null,
+   "cir": false,
+   "prod": false,
+   "rai": false,
+   "tra": false,
+   "obs": true,
+   "f": ""
+  },
+  {
+   "r": 4,
+   "c": "S",
+   "n1": "S: Racimo sobremaduro / podrido",
+   "n2": null,
+   "n3": null,
+   "s": [],
+   "h": null,
+   "cir": false,
+   "prod": false,
+   "rai": false,
+   "tra": false,
+   "obs": true,
+   "f": ""
+  },
+  {
+   "r": 5,
+   "c": "F",
+   "n1": "F: Fruto suelto sin recoger",
+   "n2": null,
+   "n3": null,
+   "s": [],
+   "h": null,
+   "cir": false,
+   "prod": false,
+   "rai": false,
+   "tra": false,
+   "obs": true,
+   "f": ""
+  }
+ ],
+ "enfermedades": {
+  "C": {
+   "color": "#00c853",
+   "tipo": "enferma"
+  },
+  "M": {
+   "color": "#ffab00",
+   "tipo": "enferma"
+  },
+  "V": {
+   "color": "#1e88e5",
+   "tipo": "enferma"
+  },
+  "S": {
+   "color": "#6d4c41",
+   "tipo": "enferma"
+  },
+  "F": {
+   "color": "#e53935",
+   "tipo": "enferma"
+  }
+ }
+}
