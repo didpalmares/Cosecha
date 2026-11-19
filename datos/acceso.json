@@ -1,0 +1,56 @@
+{
+ "formato": "cosecha-acceso-1",
+ "id": "c97cfe51-75de-45c7-a7c6-aeeeaaa1867e",
+ "creado": "2026-11-19T02:49:39.207Z",
+ "repo": {
+  "owner": "didpalmares",
+  "repo": "CosechaData",
+  "rama": "main"
+ },
+ "kdf": {
+  "alg": "PBKDF2-SHA256",
+  "iter": 600000
+ },
+ "token": {
+  "iv": "Lb5c9VDawHIsyaf1",
+  "ct": "uTQQ5zpZR8Q2/8j63hLIluV5i4EnlGm2klDhIaz6rJNrU6ihzrGmYQ8fyY7DSJPbXjXkR1K0uLwVX56XOG6XD6RH4Lf4G2izuT/QShgQ/x1MHZ0Bko7Ngj1723pkiuhCWWksRZG0KVmGOF+gow=="
+ },
+ "carto": {
+  "archivo": "carto.enc",
+  "version": "20261118-2149",
+  "tam": 4499392,
+  "lotes": 291
+ },
+ "usuarios": [
+  {
+   "u": "jjbuila",
+   "salt": "jeGhntNV8O/RBoDZh9PJNg==",
+   "iv": "u/KJTAOuw0kWGo2W",
+   "ct": "I2R8xRyVhfJt5KF8M+aHY5dCcEcdZf1B2QzSFb2mH1UK+Rn2CoqOm6VhKLGLfu71",
+   "meta": {
+    "iv": "mZUE5I1hTRHlOwny",
+    "ct": "IUt1xnh/D6TSWsLyXYNktXumYqJqysiAzdHo+sxI6TJNpMhUwUojJHPBtWXytRjO3mcFU8zJyJKg/kvOEG7nSaI7iC01xY4="
+   }
+  },
+  {
+   "u": "jmrodriguez",
+   "salt": "lnt0UI84LUgcTHxcWc3m6A==",
+   "iv": "KjFCkcD7+VY8LSQF",
+   "ct": "4elceNsjRYvo/7W1zQOA7akm6w4OKSpsr0yvYISsZPW39VJJ0O5ZxE8CT1zNi9Nu",
+   "meta": {
+    "iv": "PJSMd03SDn02JkPF",
+    "ct": "hmXR9fclUHtT6hguViyaTSLHi93VwyTcNzRi56HrUCPsg4GWu0llPUbG7qomDdwXPCnNqCj13qo+7mOasylU"
+   }
+  },
+  {
+   "u": "lcfernandez",
+   "salt": "C2Lx8G+pstxt2ZSJ2u433A==",
+   "iv": "B6ecUBfXB+iEMIAg",
+   "ct": "yZRRBAxQZSvc5OBw77xyLeLbgWmb9lT6am80Vt+xZw2XFHJcoUkCsLe9OKFd+6zw",
+   "meta": {
+    "iv": "72K/F/jZtRVTWR9R",
+    "ct": "P9G9mTffN/BPZcuBeO67UfXczmW70SEU2zOed+vQOWLp7vBheyrYaWnQX3cYKnddELeYPLtRfKnOtc/FRXpPID6VdX+tP/hyW/U="
+   }
+  }
+ ]
+}
