@@ -8,7 +8,7 @@
    ===================================================================== */
 const HVV={lotes:new Map(),ind:null};
 const HVP={on:false,lote:'',pid:null,filtro:'todas',q:'',mapa:null,capa:null,lista:[]};
-const HV_FILTROS=[['todas','Todas'],['nap','R / V (no se aplica)']];
+const HV_FILTROS=[['todas','Todas'],['nap','Con racimos (R)']];
 (function(){
   const css=document.createElement('style');css.textContent=`
   #hvPanel{position:fixed;left:0;right:0;bottom:0;z-index:1500;display:grid;grid-template-columns:minmax(320px,400px) 1fr;background:var(--fondo,#06140f)}
@@ -81,7 +81,7 @@ async function palmasHV(lote){
   return {lista:[...out.values()].filter(x=>x.ev.length).sort((a,b)=>ordenNat(a.linea,b.linea)||ordenNat(a.palma,b.palma)),err};
 }
 const colorHV=x=>{const u=x.r.ult;if(x.ev.some(e=>e.l==='existencia'&&/aprobada/i.test(e.x)))return '#9e9e9e';return u?colorD({estado:u.e,n1_codigo:u.n1}):'#2f93d5';};
-const filtroHV={todas:()=>true,nap:x=>!!x.r.ult&&['V','M','S','F'].includes(x.r.ult.n1)};
+const filtroHV={todas:()=>true,nap:x=>!!x.r.ult&&x.r.ult.n1==='R'};
 async function abrirHVP(lote,pid){
   HVP.on=true;$('#hvPanel').hidden=false;$('#btHV').classList.add('prim');ubicarHVP();
   if(!HVP.mapa){HVP.mapa=L.map('hvMapa',{zoomControl:true,attributionControl:true,maxZoom:22});capaOrto('teselas/orto/','3',ORTO_B,17).addTo(HVP.mapa);

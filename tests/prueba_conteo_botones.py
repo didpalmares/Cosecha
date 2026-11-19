@@ -1,4 +1,4 @@
-"""Cantidades sobre los botones A, P y B (y ✓ sobre R o V) de la palma que se está trabajando (la más cercana)."""
+"""Cantidades sobre los botones C, M, V y S (y ✓ sobre F) de la palma que se está trabajando (la más cercana)."""
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from comun import CANAL, INIT_VOZ

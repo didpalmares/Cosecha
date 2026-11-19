@@ -43,10 +43,10 @@ with sync_playwright() as p:
         secuencias:[{tipo:'lote',lote:'L1',inicio:new Date(T).toISOString(),fin:new Date(T+1800000).toISOString(),hora_inicio:'23:50',hora_fin:'00:20',inicio_labor:new Date(T+60000).toISOString(),hora_inicio_labor:'23:51'}],
         visita:{t0_visita:new Date(T).toISOString(),palmas_visitadas:0,por_lote:[]},tiempos:{},transito:[]};
       const regs=[
-        {id:'R1',palma_id:'P1',jornada_id:'JH1',lote:'L1',linea:1,numero:1,lat:1.7,lng:-78.7,labor:'cosecha',a:1,p:0,b:0,cond:'',fotos:[],sync:'pendiente',
+        {id:'R1',palma_id:'P1',jornada_id:'JH1',lote:'L1',linea:1,numero:1,lat:1.7,lng:-78.7,labor:'cosecha',cosechados:1,maduros:0,verdes:0,sobremaduros:0,fruto_suelto:0,fotos:[],sync:'pendiente',
          creado:new Date(T+120000).toISOString(),creado_telefono:new Date(T+120000).toISOString(),fecha:'2026-11-18T23:52',hora_fuente:'telefono',desfase_hora_s:0,
-         pasadas:[{c:'A',f:'boton',t:new Date(T+120000).toISOString()}]},
-        {id:'R2',palma_id:'P2',jornada_id:'JH1',lote:'L1',linea:1,numero:2,lat:1.7,lng:-78.7,labor:'cosecha',a:2,p:0,b:0,cond:'',fotos:[],sync:'pendiente',
+         pasadas:[{c:'C',f:'boton',t:new Date(T+120000).toISOString()}]},
+        {id:'R2',palma_id:'P2',jornada_id:'JH1',lote:'L1',linea:1,numero:2,lat:1.7,lng:-78.7,labor:'cosecha',cosechados:2,maduros:0,verdes:0,sobremaduros:0,fruto_suelto:0,fotos:[],sync:'pendiente',
          creado:new Date(T+1200000+300000).toISOString(),creado_telefono:new Date(T+300000).toISOString(),fecha:'2026-11-19T00:15',hora_fuente:'gps',desfase_hora_s:1200}];
       regs.forEach(x=>completarPol(x));
       const pts=[{j:'JH1',t:T,lat:1.7,lng:-78.7,acc:4},{j:'JH1',t:T+60000,lat:1.7001,lng:-78.7,acc:4}];

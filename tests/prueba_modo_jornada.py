@@ -50,12 +50,12 @@ with sync_playwright() as p:
         transito:[{lote:'L1',entrada:'Transitable',t_entrada:new Date().toISOString(),salida:'',t_salida:''}]};
       S.gps={lat:1.7+m,lng:-78.7,acc:4,t:Date.now()};actualizarJornadaUI();}"""); time.sleep(.5)
     check('Con jornada: se ocultan menú, datos, cercana, ubicación, leyenda, guía de voz y Fija', not any(vis(s) for s in OCULTOS), [s for s in OCULTOS if vis(s)])
-    check('Con jornada: siguen JORNADA, barra A/P/B/R/V, micrófono y candado', vis('#btJornada') and vis('#polBar') and vis('#btBloq'))
+    check('Con jornada: siguen JORNADA, barra C/M/V/S/F, micrófono y candado', vis('#btJornada') and vis('#polBar') and vis('#btBloq'))
     check('Con jornada: la app se fija y queda a pantalla completa', 'fijar:True' in [x.replace('true', 'True') for x in pg.evaluate('__nat')] and 'pc:true' in pg.evaluate('__nat'), pg.evaluate('__nat'))
     # Dos tarjetazos con 1 s de diferencia
-    pg.evaluate("NFC.ult=null;nfcLeido({texto:'A',id:'0A'})"); time.sleep(1.0)
-    pg.evaluate("nfcLeido({texto:'A',id:'0A'})"); time.sleep(.6)
-    check('Dos tarjetazos con 1 s de diferencia: cuentan 2', pg.evaluate("(S.hechos.get('P1')||{}).a") == 2)
+    pg.evaluate("NFC.ult=null;nfcLeido({texto:'cos:C',id:'0A'})"); time.sleep(1.0)
+    pg.evaluate("nfcLeido({texto:'cos:C',id:'0A'})"); time.sleep(.6)
+    check('Dos tarjetazos con 1 s de diferencia: cuentan 2', pg.evaluate("(S.hechos.get('P1')||{}).cosechados") == 2)
     # Operario intenta desbloquear: no puede
     pg.evaluate("accesoSupervisor()"); time.sleep(.3)
     pg.fill('#supU', 'op9'); pg.fill('#supC', 'clave1234'); pg.eval_on_selector('#frmSup', 'f=>f.requestSubmit()'); time.sleep(1.2)

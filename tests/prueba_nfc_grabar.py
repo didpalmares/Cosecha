@@ -28,7 +28,7 @@ with sync_playwright() as p:
     pg.wait_for_function("typeof panelGrabarNfc==='function'", timeout=30000)
     time.sleep(1.5)
     pg.evaluate("""()=>{try{ocultarSplash()}catch(e){}document.querySelector('#login').hidden=true;
-      localStorage.setItem('cos_nfc_uid',JSON.stringify({'04CAFE':'A'}));NFC.uids=null;
+      localStorage.setItem('cos_nfc_uid',JSON.stringify({'04CAFE':'C'}));NFC.uids=null;
       window.__g=[];window.Capacitor=window.Capacitor||{};window.Capacitor.Plugins=window.Capacitor.Plugins||{};
       window.Capacitor.Plugins.Nfc={addListener:async()=>({remove(){}}),estado:async()=>({disponible:true,habilitado:true,activo:true}),iniciar:async()=>({}),reiniciar:async()=>({}),
         grabar:async o=>{__g.push(o.texto);await new Promise(r=>setTimeout(r,300));return {ok:true,id:'04CAFE',texto:o.texto};},cancelarGrabacion:async()=>{}};
@@ -39,14 +39,14 @@ with sync_playwright() as p:
         check(f'Rol {rol}: {"ve" if debe else "no ve"} «Grabar tarjetas NFC»', tiene == debe)
     pg.evaluate("SES={u:'adm',nombre:'ADMIN',rol:'admin'};panelGrabarNfc()"); time.sleep(.3)
     check('Panel con los 5 códigos y su nombre completo', pg.evaluate("[...document.querySelectorAll('#grbCods [data-g]')].map(b=>b.textContent).join('|')").count('|') == 4
-          and 'Inflorescencia en Post-Antesis' in pg.text_content('#grbCods'))
-    pg.eval_on_selector('#grbCods [data-g="P"]', 'b=>b.click()')
+          and 'Racimo maduro dejado sin cortar' in pg.text_content('#grbCods'))
+    pg.eval_on_selector('#grbCods [data-g="M"]', 'b=>b.click()')
     pg.eval_on_selector('#grbOk', 'b=>b.click()'); time.sleep(1)
-    check('Grabar P: llama al lector nativo y confirma', pg.evaluate('__g') == ['P'] and 'grabada con P' in pg.text_content('#grbMsg'), pg.text_content('#grbMsg'))
-    check('Regrabada (A → P): la app aprende el código nuevo de inmediato', pg.evaluate("uidsNfc()['04CAFE']") == 'P')
+    check('Grabar M: llama al lector nativo con «cos:M» y confirma', pg.evaluate('__g') == ['cos:M'] and 'grabada con M' in pg.text_content('#grbMsg'), pg.text_content('#grbMsg'))
+    check('Regrabada (C → M): la app aprende el código nuevo de inmediato', pg.evaluate("uidsNfc()['04CAFE']") == 'M')
     pg.eval_on_selector('#grbVer', 'b=>b.click()'); time.sleep(.3)
-    r = pg.evaluate("nfcLeido({texto:'P',id:'04CAFE'})"); time.sleep(.3)
-    check('Verificar: muestra el código y no registra', r == 'verificada' and 'Esta tarjeta es P' in pg.text_content('#grbMsg') and pg.evaluate("S.registros.length") == 0, pg.text_content('#grbMsg'))
+    r = pg.evaluate("nfcLeido({texto:'cos:M',id:'04CAFE'})"); time.sleep(.3)
+    check('Verificar: muestra el código y no registra', r == 'verificada' and 'Esta tarjeta es M' in pg.text_content('#grbMsg') and pg.evaluate("S.registros.length") == 0, pg.text_content('#grbMsg'))
     check('Sin errores de JavaScript', not errores, errores[:3])
     nav.close()
 

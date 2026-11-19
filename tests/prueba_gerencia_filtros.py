@@ -15,14 +15,14 @@ DATOS = """()=>{document.querySelector('#login').hidden=true;document.querySelec
   const PAL={IT01:[...Array(20)].map((_,i)=>[i+1,1,i+1,i===19?0:1,-78.700+i*0.00005,1.500+i*0.0005]),IT05:[...Array(10)].map((_,i)=>[101+i,1,i+1,1,-78.690+i*0.00005,1.500+i*0.0005])};
   window.chunkLote=async l=>PAL[l]||[];
   const hoy=hoyISO(),ayer=hoyISO(new Date(Date.now()-86400000));
-  const dg=(id,k,x)=>normPol({tipo:'diagnostico',id:id+'d'+k,palma_id:String(x.p),lote:x.lote||'IT01',linea:1,palma:x.p,labor:'cosecha',a:x.a||0,p:x.pp||0,b:x.b||0,cond:x.cond||'',creado:new Date().toISOString(),lat:1.5,lng:-78.7});
+  const dg=(id,k,x)=>normPol({tipo:'diagnostico',id:id+'d'+k,palma_id:String(x.p),lote:x.lote||'IT01',linea:1,palma:x.p,labor:'cosecha',cosechados:x.c||0,maduros:x.m||0,verdes:x.v||0,sobremaduros:x.s||0,fruto_suelto:x.fs||0,creado:new Date().toISOString(),lat:1.5,lng:-78.7});
   const mk=(id,u,nom,fecha,pl,diags)=>{const j={id,fecha,evaluador:nom,usuario:u,inicio:fecha+'T12:00:00Z',fin:fecha+'T13:00:00Z',hora_inicio:'07:00',hora_fin:'08:00',duracion_min:60,km:1,ha:1,palmas:10,metodo:'calle',
     n_paradas:0,min_paradas:0,min_mov:60,por_lote:pl,densidad:115,app:'',lotes:new Set([...pl.map(x=>x.lote),...diags.map(x=>x.lote||'IT01')]),paradas:[],track:{c:[[-78.7,1.5],[-78.7,1.501]],t:[0,60000],acc:[4,4]},header:{},secuencias:null,tiempos:{min_efectivo_labor:50},vel:2,diags:[]};
     j.diags=diags.map((x,k)=>({...dg(id,k,x),_j:j}));return j;};
   const r=(a,b)=>[...Array(b-a+1)].map((_,i)=>a+i);
   JOR=[mk('J1','op1','OPERARIO UNO',hoy,[{lote:'IT01',palmas_visitadas:10,ha:.1,ids_palmas_visitadas:r(1,10)}],
-          [{p:1,a:2,pp:1},{p:2,a:1},{p:3,b:2},{p:4,cond:'R'}]),
-       mk('J2','op2','OPERARIO DOS',ayer,[{lote:'IT01',palmas_visitadas:5,ha:.05,ids_palmas_visitadas:r(1,5)}],[{p:5,lote:'IT05',pp:2,b:1}])];
+          [{p:1,c:2,m:1},{p:2,c:1},{p:3,s:2},{p:4,fs:1}]),
+       mk('J2','op2','OPERARIO DOS',ayer,[{lote:'IT01',palmas_visitadas:5,ha:.05,ids_palmas_visitadas:r(1,5)}],[{p:5,lote:'IT05',m:2,s:1}])];
   LOTES={type:'FeatureCollection',features:['IT01','IT05'].map((l,k)=>({type:'Feature',properties:{_lote:l,Programa:k?'IT-B':'IT-A',Area_ha:k?5:10},geometry:{type:'Polygon',coordinates:[[[-78.701+k*0.01,1.499],[-78.698+k*0.01,1.499],[-78.698+k*0.01,1.511],[-78.701+k*0.01,1.511],[-78.701+k*0.01,1.499]]]}}))};
   IND_LOTES={IT01:{n:20},IT05:{n:10}};for(const f of LOTES.features)PROG.set(f.properties._lote,f.properties.Programa);
   msOpciones('prog',[{v:'IT-A',t:'IT-A'},{v:'IT-B',t:'IT-B'}]);opcionesLote();msOpciones('op',[{v:'op1',t:'OPERARIO UNO'},{v:'op2',t:'OPERARIO DOS'}]);
@@ -49,14 +49,14 @@ with sync_playwright() as p:
     # Cosecha
     vz.click('[data-tsub=pol]'); vz.wait_for_timeout(500)
     E = vz.inner_text('#gerPanel')
-    check('Cosecha: KPIs con los 5 registros', '5 Palmas registradas' in ' '.join(E.split()) and 'Total B: Balón (Post-Antesis pasada)' in E, E[:300])
+    check('Cosecha: KPIs con los 5 registros', '5 Palmas registradas' in ' '.join(E.split()) and 'Total S: Racimo sobremaduro / podrido' in E, E[:300])
     filas = vz.evaluate("[...document.querySelectorAll('#polLotes tbody tr')].map(t=>t.cells[0].innerText+':'+t.cells[2].innerText)")
     check('Cosecha: tabla por lote (IT01 4 palmas, IT05 1)', filas == ['IT01:4', 'IT05:1'], filas)
     vz.click('#polLotes [data-polote="IT05"]'); vz.wait_for_timeout(500)
     check('Clic en un lote filtra todo por él', vz.evaluate("[...FIL.lote].join()+'/'+DIAGF.length") == 'IT05/1' and '1 registros de cosecha' in vz.inner_text('#gerFil'), vz.evaluate("[...FIL.lote,DIAGF.length]"))
     vz.click('#gLimpiar'); vz.wait_for_timeout(300)
-    vz.evaluate("msSolo('cod','B');aplicarFiltros(true)"); vz.wait_for_timeout(300)
-    check('Filtro Código (B) desde la barra de Gerencia', vz.evaluate("DIAGF.map(d=>d.palma_id).sort().join()") == '3,5' and vz.inner_text('#gerFil .ms[data-k=cod] .ms-bt') == 'B')
+    vz.evaluate("msSolo('cod','S');aplicarFiltros(true)"); vz.wait_for_timeout(300)
+    check('Filtro Código (S) desde la barra de Gerencia', vz.evaluate("DIAGF.map(d=>d.palma_id).sort().join()") == '3,5' and vz.inner_text('#gerFil .ms[data-k=cod] .ms-bt') == 'S')
     vz.click('#gLimpiar'); vz.wait_for_timeout(300)
     # Mapa de avance
     vz.click('[data-tsub=avance]')

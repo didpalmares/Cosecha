@@ -51,9 +51,9 @@ with sync_playwright() as p:
       S.palmas={type:'FeatureCollection',features:[f]};S.idx=new Map([['P1',f]]);
       S.jornada={id:'J1',evaluador:'Op',estado:'activa',seleccion:[],inicio:new Date().toISOString(),labor:'cosecha',
         transito:[{lote:'L1',entrada:'Transitable',t_entrada:new Date().toISOString(),salida:'',t_salida:''}]};
-      S.gps={lat:1.7+m,lng:-78.7,acc:4,t:Date.now()};await sumarCodigo('A','boton');const r=S.hechos.get('P1');
-      return {real:Date.parse(r.creado),tel:Date.parse(r.creado_telefono),fuente:r.hora_fuente,des:r.desfase_hora_s,a:r.a};}""")
-    check('Con la hora mal igual registra (solo advierte)', r['a'] == 1, r)
+      S.gps={lat:1.7+m,lng:-78.7,acc:4,t:Date.now()};await sumarCodigo('C','boton');const r=S.hechos.get('P1');
+      return {real:Date.parse(r.creado),tel:Date.parse(r.creado_telefono),fuente:r.hora_fuente,des:r.desfase_hora_s,c:r.cosechados};}""")
+    check('Con la hora mal igual registra (solo advierte)', r['c'] == 1, r)
     check('El registro guarda la hora real (+20 min) y la del teléfono', abs((r['real'] - r['tel']) - 20 * 60000) < 3000 and r['fuente'] == 'internet' and abs(r['des'] - 1200) <= 3, r)
     # 4) Sin internet, con GPS (plugin nativo simulado): celular 1 h adelantado
     SERV['desfase_s'] = 0

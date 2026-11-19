@@ -144,7 +144,7 @@ table.usuarios td{font-size:13.5px}
         <div class="fila" style="margin:10px 0">
           <input type="text" id="eBuscar" placeholder="Buscar por usuario, nombre, cargo o identificación" style="flex:3;min-width:220px">
           <select id="eFRol"><option value="">Todos los roles</option><option value="operario">Operarios</option><option value="supervisor">Supervisores</option><option value="analista">Analistas de datos</option><option value="admin">Administradores</option><option value="superadmin">Super administradores</option></select>
-          <select id="eFLab"><option value="">Todas las labores</option><option value="cosecha">Cosecha</option><option value="inactivo">Suspendidos</option><option value="cambios">Con cambios</option></select>
+          <select id="eFLab"><option value="">Todas las labores</option><option value="corte">Corte de fruto</option><option value="recoleccion">Recolección con búfalo</option><option value="corte_recoleccion">Corte y recolección</option><option value="alce">Alce de fruto en sendero</option><option value="inactivo">Suspendidos</option><option value="cambios">Con cambios</option></select>
         </div>
         <div style="overflow-x:auto"><table class="usuarios"><thead><tr><th>Usuario</th><th>Nombre</th><th>Cargo</th><th>Rol</th><th>Labores</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="eLista"></tbody></table></div>
         <div class="fila" style="margin-top:12px"><button class="btn chico prim" id="eAgregar">＋ Nuevo usuario</button><button class="btn chico" id="eImport">⬆ Cargar desde Excel o CSV</button><button class="btn chico" id="eCsv">⬇ Exportar lista (CSV, sin contraseñas)</button><button class="btn chico" id="eHist">🕘 Historial de cambios</button></div>
@@ -215,7 +215,7 @@ table.usuarios td{font-size:13.5px}
       <ol class="tenue" style="margin:4px 0 10px;padding-left:20px;line-height:1.6">
         <li>Use tarjetas o llaveros NFC en blanco (NTAG213, NTAG215 o NTAG216; las tarjetas bancarias o de transporte no sirven).</li>
         <li>Pulse <b>GRABAR</b> y, cuando lo indique, acerque la tarjeta a la parte trasera del celular (cerca de la cámara) y manténgala quieta hasta el aviso.</li>
-        <li>Marque la tarjeta con su letra (C, M, V, S o F) y su color, para que el operario la reconozca.</li>
+        <li>Marque la tarjeta con su letra (R o D) y su color, para que el operario la reconozca.</li>
         <li>Si la tarjeta ya tenía un código, se reemplaza. Use <b>Leer tarjeta</b> para comprobarla.</li>
       </ol>
       <div class="fila"><button class="btn nar" id="nfcGrabar" disabled>GRABAR</button><button class="btn" id="nfcLeer" disabled>Leer tarjeta</button><button class="btn" id="nfcCancelar" hidden>Cancelar</button></div>
@@ -339,9 +339,8 @@ function mostrarResultado(cont,archivos,lista){
 $('#tabs').onclick=e=>{const b=e.target.closest('button');if(!b)return;$$('#tabs button').forEach(x=>x.classList.toggle('on',x===b));$('#crear').hidden=b.dataset.t!=='crear';$('#editar').hidden=b.dataset.t!=='editar';$('#nfc').hidden=b.dataset.t!=='nfc';};
 
 /* ---------- Grabar tarjetas NFC (Web NFC: Chrome en Android) ----------
-   La App lee el texto «cos:C», «cos:M», «cos:V», «cos:S» o «cos:F»: cada toque suma 1 a la palma más cercana. */
-const NFC_COD=[{c:'C',n:'Racimo cosechado',col:'#2e7d32'},{c:'M',n:'Racimo maduro dejado sin cortar',col:'#f9a825'},{c:'V',n:'Racimo verde cortado',col:'#1565c0'},
-  {c:'S',n:'Racimo sobremaduro / podrido',col:'#6d4c41'},{c:'F',n:'Fruto suelto sin recoger',col:'#c62828'}];
+   La App lee el texto «R» (racimo) o «D» (descargue del viaje, se pasa dos veces): cada toque suma 1 a la palma más cercana. */
+const NFC_COD=[{c:'R',n:'Racimo',col:'#2e7d32'},{c:'D',n:'Descargue del viaje (Recolección)',col:'#1565c0'}];
 const NFCW={cod:null,ctrl:null,hay:'NDEFReader' in window};
 function nfcMsg(t,cls){const m=$('#nfcMsg');m.className='nfc-msg'+(cls?' '+cls:'');m.innerHTML=t;}
 function nfcPintar(){$('#nfcCods').innerHTML=NFC_COD.map(x=>`<button type="button" data-c="${x.c}" class="${NFCW.cod===x.c?'on':''}" style="--c:${x.col}"><b>${x.c}</b><span>${esc(x.n)}</span></button>`).join('');
@@ -352,11 +351,11 @@ $('#nfcCods').onclick=e=>{const b=e.target.closest('[data-c]');if(!b||NFCW.ctrl)
 function nfcTerminar(){if(NFCW.ctrl){try{NFCW.ctrl.abort();}catch(e){}}NFCW.ctrl=null;nfcPintar();}
 const nfcError=e=>e&&e.name==='NotAllowedError'?'Permita el uso de NFC para esta página (Chrome lo pregunta la primera vez) y verifique que el NFC del celular esté activado.'
   :e&&e.name==='NotSupportedError'?'Este celular no tiene NFC o está desactivado. Actívelo en Ajustes → Conexiones → NFC.':'No se pudo: '+esc(String(e&&e.message||e))+'. Intente de nuevo sin mover la tarjeta.';
-const codDeTexto=t=>{const m=String(t||'').trim().toUpperCase().match(/^COS:(?:\/\/)?\s*([CMVSF])\s*$/);return m?NFC_COD.find(y=>y.c===m[1]):null;};
+const codDeTexto=t=>{const m=String(t||'').trim().toUpperCase().match(/^(?:COS:(?:\/\/)?)?\s*([RD])\s*$/);return m?NFC_COD.find(y=>y.c===m[1]):null;};
 $('#nfcGrabar').onclick=async()=>{if(!NFCW.hay||!NFCW.cod)return;const x=NFC_COD.find(y=>y.c===NFCW.cod);
   const ctrl=new AbortController();NFCW.ctrl=ctrl;const tm=setTimeout(()=>{if(NFCW.ctrl===ctrl){nfcTerminar();nfcMsg('Se agotó el tiempo (30 s). Pulse GRABAR de nuevo.','mal');}},30000);nfcPintar();
   nfcMsg(`📶 Acerque ahora la tarjeta a la parte trasera del celular para grabar <b>${x.c}</b> · ${esc(x.n)}…`);
-  try{const recs=[{recordType:'text',lang:'es',data:'cos:'+x.c}];
+  try{const recs=[{recordType:'text',lang:'es',data:x.c}];
     // Marca de Android (AAR): si la tarjeta se acerca con la app cerrada, Android abre Cosecha y ninguna otra app
     const conAar=[...recs,{recordType:'android.com:pkg',data:new TextEncoder().encode('co.palmasdetumaco.cosecha')}];
     try{await new NDEFReader().write({records:conAar},{overwrite:true,signal:ctrl.signal});}
@@ -416,13 +415,16 @@ const esSuperYo=()=>!!(ED.yo&&ED.yo.rol==='superadmin');
 const restringido=()=>!!ED.haySuper&&!esSuperYo();
 const rolOrig=x=>{try{return ED.orig[x.u]?JSON.parse(ED.orig[x.u]).rol:x.rol;}catch(e){return x.rol;}};
 const puedeGestionar=x=>!restringido()||(!ROLES_PRIV.includes(rolOrig(x))&&!ROLES_PRIV.includes(x.rol));
-const LABOR_APP='cosecha',LAB_TXT={cosecha:'Cosecha'};
-/* La App tiene una sola labor (cosecha): todos los usuarios la tienen. */
-const laboresDe=()=>[LABOR_APP];
+const LABOR_APP='cosecha';
+/* Labores de cosecha. Cada usuario tiene una o varias; al iniciar la jornada en la App elige entre las suyas.
+   «cosecha» (paquetes anteriores) o sin labores = todas. */
+const LABORES_COS=['corte','recoleccion','corte_recoleccion','alce'];
+const LAB_TXT={corte:'Corte de fruto',recoleccion:'Recolección con búfalo',corte_recoleccion:'Corte y recolección',alce:'Alce de fruto en sendero'};
+const laboresDe=x=>{const l=(x&&Array.isArray(x.labores)?x.labores:[]).filter(v=>LABORES_COS.includes(v));return l.length?l:LABORES_COS.slice();};
 /* Datos del usuario que viajan cifrados en «meta» (se conservan los campos que no edita esta página). */
 function metaDe(x){const m={...x};for(const k of ['u','clave','nuevo'])delete m[k];
   for(const k of ['cargo','identificacion'])if(!m[k])delete m[k];for(const k of ['rol_cirugia','rol_erradicacion'])delete m[k];if(!m.inactivo)delete m.inactivo;
-  m.labores=[LABOR_APP];return m;}
+  m.labores=laboresDe(x);return m;}
 $('#eAbrir').onclick=async()=>{
   const msg=$('#eAbrirMsg');msg.textContent='';
   try{
@@ -478,7 +480,7 @@ function pintarLista(){
 }
 /* Formulario para crear o editar un usuario (todos sus datos). */
 function formUsuario(x){
-  const nuevo=!x||x.nuevo,d=x||{u:'',nombre:'',cargo:'',identificacion:'',rol:'operario',labores:[LABOR_APP],clave:generarClave(),nuevo:true};
+  const nuevo=!x||x.nuevo,d=x||{u:'',nombre:'',cargo:'',identificacion:'',rol:'operario',labores:LABORES_COS.slice(),clave:generarClave(),nuevo:true};
   const lab=laboresDe(d);const f=$('#eForm');f.hidden=false;
   f.innerHTML=`<h2 style="font-size:17px">${nuevo&&!x?'Nuevo usuario':'Editar usuario · '+esc(d.u)}</h2>
     <div class="fila"><div><label>Usuario</label><input type="text" id="fU" value="${esc(d.u)}" ${nuevo?'':'disabled'} autocapitalize="none" placeholder="jperez"></div>
@@ -486,7 +488,7 @@ function formUsuario(x){
     <div class="fila"><div><label>Cargo</label><input type="text" id="fCargo" value="${esc(d.cargo||'')}" placeholder="Auxiliar de cosecha"></div>
       <div><label>Identificación</label><input type="text" id="fId" value="${esc(d.identificacion||'')}" placeholder="Cédula"></div>
       <div><label>Rol</label><select id="fRol">${Object.entries(ROL_TXT).filter(([k])=>!restringido()||!ROLES_PRIV.includes(k)).map(([k,t])=>`<option value="${k}" ${d.rol===k?'selected':''}>${t}${k==='supervisor'?' (visor web)':k==='analista'?' (permisos de administrador)':k==='superadmin'?' (control total)':''}</option>`).join('')}</select></div></div>
-    <label>Labor</label><p class="tenue" style="margin:2px 0 8px">${lab.map(l=>LAB_TXT[l]).join(', ')} (única labor de la App)</p>
+    <label>Labores</label><div class="fila" style="flex-wrap:wrap;gap:6px 14px;margin:2px 0 8px">${LABORES_COS.map(l=>`<label class="check"><input type="checkbox" name="fLab" value="${l}" ${lab.includes(l)?'checked':''}> ${LAB_TXT[l]}</label>`).join('')}</div>
     ${nuevo?`<label>Contraseña</label><div class="fila" style="flex-wrap:nowrap"><input type="text" id="fClave" value="${esc(d.clave||generarClave())}"><button class="btn chico" id="fGen" style="flex:none;min-width:0">↻</button></div>`
       :`<label class="check" style="margin-top:12px"><input type="checkbox" id="fSus" ${d.inactivo?'checked':''}> Suspendido (no puede ingresar)</label>`}
     <div class="err" id="fMsg"></div>
@@ -495,7 +497,7 @@ function formUsuario(x){
   $('#fNo').onclick=()=>{f.hidden=true;};
   $('#fOk').onclick=()=>{try{
       const u=$('#fU').value.trim().toLowerCase(),nombre=$('#fNombre').value.trim(),rol=$('#fRol').value;
-      const labores=[LABOR_APP];
+      const labores=[...document.querySelectorAll('input[name="fLab"]:checked')].map(i=>i.value);
       if(restringido()&&ROLES_PRIV.includes(rol))throw new Error('Solo el super administrador puede asignar roles de administrador, analista o super administrador.');
       if(nuevo){if(!reUser.test(u))throw new Error('Usuario no válido: minúsculas, números, punto o guion (mín. 3).');
         if(todos().some(y=>y.u===u&&y!==x))throw new Error(`El usuario «${u}» ya existe.`);}
@@ -708,7 +710,7 @@ async function importarUsuarios(f){
   const cab=filas[0].map(normCol);const col={};for(const [k,syn] of Object.entries(SINON)){const i=cab.findIndex(c=>syn.includes(c));if(i>=0)col[k]=i;}
   if(col.usuario==null)throw new Error('Falta la columna «usuario».');
   const rolDe=v=>{v=normCol(v);return /super.?admin/.test(v)?'superadmin':/admin/.test(v)?'admin':/super/.test(v)?'supervisor':/analis/.test(v)?'analista':v?'operario':null;};
-  const labDe=v=>{v=normCol(v);if(!v)return null;const l=[];if(/polin/.test(v))l.push(LABOR_APP);return l.length?l:null;};
+  const labDe=v=>{v=normCol(v);if(!v)return null;if(/todas|cosecha$/.test(v))return LABORES_COS.slice();const l=[];if(/corte.*(recol|y)/.test(v)||/c\s*y\s*r/.test(v))l.push('corte_recoleccion');else if(/corte/.test(v))l.push('corte');if(/recol/.test(v)&&!l.includes('corte_recoleccion'))l.push('recoleccion');if(/alce/.test(v))l.push('alce');return l.length?l:null;};
   const res={nuevos:[],act:[],err:[]};const vistos=new Set();
   filas.slice(1).forEach((fl,i)=>{const g=k=>col[k]!=null?String(fl[col[k]]??'').trim():'';const u=g('usuario').toLowerCase();const n=i+2;
     if(!u&&!g('nombre'))return;
@@ -721,7 +723,7 @@ async function importarUsuarios(f){
     const ex=todos().find(x=>x.u===u);
     if(ex){res.act.push({x:ex,datos,clave});}
     else{if(!datos.nombre){res.err.push(`Fila ${n}: falta el nombre del usuario nuevo «${u}».`);return;}
-      res.nuevos.push({u,nombre:datos.nombre,cargo:'',identificacion:'',rol:'operario',labores:[LABOR_APP],...datos,clave:clave||generarClave(),nuevo:true});}});
+      res.nuevos.push({u,nombre:datos.nombre,cargo:'',identificacion:'',rol:'operario',labores:LABORES_COS.slice(),...datos,clave:clave||generarClave(),nuevo:true});}});
   const msg=`Archivo: ${f.name}\n\n· ${res.nuevos.length} usuario(s) nuevo(s)\n· ${res.act.length} usuario(s) existente(s) a actualizar\n· ${res.err.length} fila(s) con error${res.err.length?':\n  '+res.err.slice(0,12).join('\n  ')+(res.err.length>12?'\n  …':''):''}\n\n¿Aplicar los cambios? (Quedan pendientes hasta «Generar archivos actualizados».)`;
   if(!(res.nuevos.length+res.act.length)){alert(msg.replace(/\n\n¿Aplicar[\s\S]*$/,''));return;}
   if(!confirm(msg))return;

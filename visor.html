@@ -878,7 +878,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
       <div id="lgMsg"></div>
     </form>
     <p class="tenue" style="font-size:12.5px;margin:6px 0 0">Acceso para administradores y supervisores. Requiere internet: los datos se leen del repositorio privado de GitHub.</p>
-    <div id="lgVer">VERSIÓN 20261118:2101</div>
+    <div id="lgVer">VERSIÓN 20261118:2224</div>
   </div>
 </div>
 
@@ -908,7 +908,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
           <div><label class="campo">Programa</label><div class="ms" data-k="prog"><button type="button" class="ms-bt" aria-haspopup="listbox">Todos</button></div></div>
           <div><label class="campo">Operario</label><div class="ms" data-k="op"><button type="button" class="ms-bt" aria-haspopup="listbox">Todos</button></div></div>
           <div><label class="campo">Lote</label><div class="ms" data-k="lote"><button type="button" class="ms-bt" aria-haspopup="listbox">Todos</button></div></div>
-          <div><label class="campo">Código</label><div class="ms" data-k="cod"><button type="button" class="ms-bt" aria-haspopup="listbox">Todos</button></div></div>
+          <div><label class="campo">Labor</label><div class="ms" data-k="cod"><button type="button" class="ms-bt" aria-haspopup="listbox">Todos</button></div></div>
         </div>
         <div id="prog"><b></b></div>
         <div id="progTxt" class="tenue"></div>
@@ -968,7 +968,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
    Los archivos de GitHub no cambian una vez escritos, por eso se guardan
    en caché local por su huella (sha) y solo se descargan una vez.
    ===================================================================== */
-const VERSION='20261118:2101';
+const VERSION='20261118:2224';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=(n,d=0)=>Number(n||0).toLocaleString('es-CO',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -985,37 +985,40 @@ const estadoDe=id=>ESTADOS.find(e=>e.id===id);
 const COLOR_N1={PC:'#e53935',PE:'#8e24aa',DBP:'#fb8c00',AR:'#ad1457',CER:'#795548',DEF:'#c0ca33',ESP:'#00acc1',HP:'#3949ab',MJ:'#f48fb1',ML:'#212121',MS:'#1e88e5',PA:'#827717',PEST:'#26a69a',RAYO:'#ffffff',YAR:'#33691e',BORO:'#ffb300',EV:'#cfd8dc'};
 const COLOR_ALTA='#00e676';
 /* ---------- Registro de cosecha (los mismos códigos de la App) ----------
-   C, M, V y S se cuentan y se combinan (3C + 1M + 1V); F (fruto suelto sin recoger) es sí o no por palma. */
-const COD_POL=[{c:'C',n:'Racimo cosechado',col:'#00c853',k:'cosechados'},{c:'M',n:'Racimo maduro dejado sin cortar',col:'#ffab00',k:'maduros'},
-  {c:'V',n:'Racimo verde cortado',col:'#1e88e5',k:'verdes'},{c:'S',n:'Racimo sobremaduro / podrido',col:'#6d4c41',k:'sobremaduros'},
-  {c:'F',n:'Fruto suelto sin recoger',col:'#e53935',k:'fruto_suelto',max:1}];
+   R = racimo (por palma en Corte, Recolección y Corte y recolección; por acopio en Alce). D = descargue del viaje (evento de la jornada). */
+const COD_POL=[{c:'R',n:'Racimo',col:'#00c853',k:'racimos'}];
 const COD_INF_V=COD_POL;
-/* Prioridad del color de la palma: primero los errores de cosecha (verde cortado, maduro dejado, sobremaduro, fruto suelto); si no, C. */
-const PRIO_COD=['V','M','S','F','C'];
+const PRIO_COD=['R'];
 const codPolDe=c=>COD_POL.find(x=>x.c===c);
 const etqCod=c=>{const x=codPolDe(c);return x?x.c+': '+x.n:String(c||'');};
-/* Deja cosechados, maduros, verdes, sobremaduros, fruto_suelto y racimos (C + V + S) en el registro. */
+/* Labores de cosecha (las mismas de la App). Jornadas sin labor o con «cosecha» (versiones anteriores) = Corte. */
+const LABORES_V=[{id:'corte',n:'Corte de fruto',corto:'Corte',col:'#00c853'},{id:'recoleccion',n:'Recolección con búfalo',corto:'Recolección',col:'#1e88e5'},
+  {id:'corte_recoleccion',n:'Corte y recolección',corto:'Corte y recolección',col:'#8e24aa'},{id:'alce',n:'Alce de fruto en sendero',corto:'Alce',col:'#ff6d00'}];
+const laborId=v=>LABORES_V.some(x=>x.id===v)?v:'corte';
+const laborDeJ=j=>laborId(j&&(j.labor||(j.header&&j.header.labor)));
+const laborV=id=>LABORES_V.find(x=>x.id===laborId(id));
+/* Deja racimos (R) y la labor en el registro. */
 function normPol(d){
-  if(COD_POL.every(x=>d[x.k]==null)){const t=String(d.nivel1||'');
-    for(const x of COD_POL){const r=x.max?new RegExp('(?:^|\\+\\s*)'+x.c+'\\b').exec(t):new RegExp('(\\d+)\\s*'+x.c+'\\b').exec(t);d[x.k]=r?(x.max?1:Number(r[1])):0;}}
-  for(const x of COD_POL){d[x.k]=Math.max(0,Number(d[x.k])||0);if(x.max)d[x.k]=Math.min(x.max,d[x.k]);}
-  d.cond='';d.racimos=d.cosechados+d.verdes+d.sobremaduros;return d;}
-const polN=d=>d.cosechados==null||d.racimos==null?normPol({...d}):d;
-const codPol=d=>{const q=polN(d);return PRIO_COD.find(c=>q[codPolDe(c).k]>0)||'';};
-const codigosPol=d=>{const q=polN(d);return COD_POL.filter(x=>q[x.k]>0).map(x=>x.c);};
-const textoPol=d=>{const q=polN(d);return COD_POL.filter(x=>q[x.k]>0).map(x=>x.max?x.c:q[x.k]+x.c).join(' + ')||'Sin registro';};
+  if(d.racimos==null){const m=/(\d+)\s*R\b/.exec(String(d.nivel1||''));d.racimos=m?Number(m[1]):0;}
+  d.racimos=Math.max(0,Number(d.racimos)||0);d.cond='';d.labor=laborId(d.labor);return d;}
+const polN=d=>d.racimos==null||!LABORES_V.some(x=>x.id===d.labor)?normPol({...d}):d;
+const codPol=d=>polN(d).racimos>0?'R':'';
+const codigosPol=d=>codPol(d)?['R']:[];
+const textoPol=d=>{const q=polN(d);return q.racimos>0?q.racimos+'R':'Sin registro';};
 const fuentePol=d=>{const fs=[...new Set((Array.isArray(d.pasadas)?d.pasadas:[]).map(x=>x.f).filter(Boolean))];return (fs.length?fs:[d.fuente]).filter(Boolean).map(x=>FUENTES[x]||x).join(', ');};
 const codN1=d=>codPol(d)||d.n1_codigo||'';
 function colorD(d){if(!d)return '#999';const x=codPolDe(codPol(d)||d.n1_codigo||'');return x?x.col:'#9e9e9e';}
 /* Último registro de cada palma (el que pinta el mapa). */
 const clavePalma=d=>String(d.palma_id??(d.lote+'|'+d.linea+'|'+d.palma));
 function ultimosPorPalma(ds){const m=new Map();for(const d of ds){const k=clavePalma(d),u=m.get(k);if(!u||String(d.creado)>String(u.creado))m.set(k,d);}return [...m.values()];}
-/* Totales de la cosecha de un grupo de registros. racimos = C + V + S (cortados); % verdes = V ÷ racimos; fruto_suelto = palmas con F. */
-function totalesPol(ds){const t={reg:ds.length,palmas:new Set(),cosechados:0,maduros:0,verdes:0,sobremaduros:0,fs:new Set()};
-  for(const d of ds){const q=polN(d),k=clavePalma(d);t.palmas.add(k);t.cosechados+=q.cosechados;t.maduros+=q.maduros;t.verdes+=q.verdes;t.sobremaduros+=q.sobremaduros;if(q.fruto_suelto)t.fs.add(k);}
-  const rac=t.cosechados+t.verdes+t.sobremaduros;
-  return {reg:t.reg,palmas:t.palmas.size,cosechados:t.cosechados,maduros:t.maduros,verdes:t.verdes,sobremaduros:t.sobremaduros,fruto_suelto:t.fs.size,racimos:rac,
-    pverdes:rac?t.verdes/rac*100:null,pmaduros:(rac+t.maduros)?t.maduros/(rac+t.maduros)*100:null};}
+/* Totales de la cosecha de un grupo de registros de palma: racimos (R) en total y por labor. */
+function totalesPol(ds){const t={reg:ds.length,palmas:new Set(),racimos:0,corte:0,recoleccion:0,corte_recoleccion:0};
+  for(const d of ds){const q=polN(d);t.palmas.add(clavePalma(d));t.racimos+=q.racimos;t[q.labor]=(t[q.labor]||0)+q.racimos;}
+  return {reg:t.reg,palmas:t.palmas.size,racimos:t.racimos,corte:t.corte,recoleccion:t.recoleccion,corte_recoleccion:t.corte_recoleccion};}
+/* Descargues (D) y acopios alzados (Alce) de las jornadas, con los filtros de lote y programa. */
+function eventosCosecha(js,tipo){const out=[];for(const j of js)for(const e of (j[tipo]||[]))if(loteSel(e.lote)&&enProg(e.lote))out.push({...e,_j:j});return out;}
+function totalesEventos(js){const D=eventosCosecha(js,'descargues'),A=eventosCosecha(js,'alces');const rd=D.reduce((t,x)=>t+(Number(x.racimos)||0),0),ra=A.reduce((t,x)=>t+(Number(x.racimos)||0),0);
+  return {viajes:D.length,r_descargados:rd,r_viaje:D.length?rd/D.length:null,acopios:A.length,r_alzados:ra,D,A};}
 /* Tramos de transitabilidad (entrada y salida de cada lote) de las jornadas. */
 function filasTransito(js,filtroLote){const out=[];
   for(const j of js)for(const x of j.transito||[]){if(filtroLote&&!filtroLote(String(x.lote)))continue;const te=Date.parse(x.t_entrada),ts=Date.parse(x.t_salida);
@@ -1493,7 +1496,7 @@ const nombreCortoHV=n=>{const p=String(n||'').trim().split(/\s+/);return p.lengt
 $('#cVias').onchange=()=>mostrarVias($('#cVias').checked);
 mapa.on('zoomend moveend',()=>{mapa.getContainer().classList.toggle('sin-etq',mapa.getZoom()<14);dibujarPalmas();});
 function pintarLeyenda(){
-  $('#leyenda').innerHTML='<b class="tit" style="font-size:13px">Registro de cosecha (último de cada palma)</b>'+COD_POL.map(x=>`<div data-cod="${x.c}"><span class="punto" style="background:${x.col}"></span><b>${x.c}:</b> ${esc(x.n)}</div>`).join('')+
+  $('#leyenda').innerHTML='<b class="tit" style="font-size:13px">Registro de cosecha</b>'+COD_POL.map(x=>`<div data-cod="${x.c}"><span class="punto" style="background:${x.col}"></span><b>${x.c}:</b> Palma con racimos</div>`).join('')+'<div><span class="punto" style="background:#1e88e5"></span><b>D:</b> Descargue del viaje (acopio)</div><div><span class="punto" style="background:#ff6d00"></span>Acopio alzado (Alce)</div>'+
   `<div><span class="punto" style="background:#4dd0e1"></span>Palma visitada (reproducción)</div><div><span style="display:inline-block;vertical-align:-5px;margin-right:4px">${SVG_FLECHA('#2f93d5',22)}</span>Operario y rumbo (reproducción)</div>`+
   '<div style="margin-top:4px">'+pillParada('#ff9f1c','min')+'Parada sin actividad</div><div>'+pillParada('#2f93d5','min')+'Parada con registro</div><div class="tenue">Recorridos: un color por operario.</div>'+leyendaVias();
 }
@@ -1601,9 +1604,10 @@ async function jornadaCarpeta(f){
   if(fd)j.fotosDir=fd.sha;j.formato='anterior';return j;
 }
 function normalizar(g,f,zipSha){
-  const h=g.jornada||{};const diags=[],paradas=[];let track=null;
+  const h=g.jornada||{};const diags=[],paradas=[],descargues=[],alces=[];let track=null;
   for(const ft of g.features||[]){const p=ft.properties||{};
-    if(p.tipo==='diagnostico'&&ft.geometry)diags.push(normPol({...p,lng:ft.geometry.coordinates[0],lat:ft.geometry.coordinates[1]}));
+    if(p.tipo==='diagnostico'&&ft.geometry)diags.push(normPol({...p,labor:p.labor&&p.labor!=='cosecha'?p.labor:h.labor,lng:ft.geometry.coordinates[0],lat:ft.geometry.coordinates[1]}));
+    else if((p.tipo==='descargue'||p.tipo==='alce')&&ft.geometry)(p.tipo==='descargue'?descargues:alces).push({...p,lng:ft.geometry.coordinates[0],lat:ft.geometry.coordinates[1]});
     else if(p.tipo==='recorrido'&&ft.geometry){const c=ft.geometry.type==='LineString'?ft.geometry.coordinates:[ft.geometry.coordinates];track={c,t:(p.tiempos||[]).map(x=>Date.parse(x)),acc:p.precision_m||[]};}
     else if(p.tipo==='parada'&&ft.geometry)paradas.push({...p,lng:ft.geometry.coordinates[0],lat:ft.geometry.coordinates[1]});}
   const lotes=new Set([...(h.por_lote||[]).map(x=>x.lote),...(h.lotes_seleccionados||[]).map(x=>x.lote),...diags.map(d=>d.lote)].filter(Boolean));
@@ -1611,7 +1615,7 @@ function normalizar(g,f,zipSha){
     inicio:h.inicio,fin:h.fin,hora_inicio:h.hora_inicio||hhmm(h.inicio),hora_fin:h.hora_fin||hhmm(h.fin),duracion_min:h.duracion_min,km:Number(h.km)||0,
     ha:Number(h.ha_recorridas)||0,palmas:Number(h.palmas_visitadas)||0,metodo:h.metodo||'buffer',comp:h.comparativo_buffer||null,
     n_paradas:Number(h.n_paradas)||paradas.length,min_paradas:Number(h.minutos_paradas)||0,min_mov:h.minutos_movimiento,por_lote:h.por_lote||[],
-    densidad:h.densidad_palmas_ha||115,app:h.app||'',sincronizado:h.sincronizado,labor:h.labor||'',transito:Array.isArray(h.transito)?h.transito:[],lotes,diags,paradas,track,header:h,secuencias:h.secuencias&&h.secuencias.length?h.secuencias:null,tiempos:h.tiempos||null,
+    densidad:h.densidad_palmas_ha||115,app:h.app||'',sincronizado:h.sincronizado,labor:laborId(h.labor),descargues,alces,transito:Array.isArray(h.transito)?h.transito:[],lotes,diags,paradas,track,header:h,secuencias:h.secuencias&&h.secuencias.length?h.secuencias:null,tiempos:h.tiempos||null,
     vel:h.velocidad_kmh!=null?Number(h.velocidad_kmh):(()=>{const m=Number(h.minutos_movimiento)||0,k=Number(h.km)||0;return m>=1&&k>0?+(k/(m/60)).toFixed(2):null;})()};
 }
 /* ---------- Secuencias por lote ----------
@@ -1674,7 +1678,7 @@ function filasSecuencias(){const hay=FIL.lote.size>0;const out=[];
       tot:Number(s.min_total)||0,desp:esL?Number(s.min_desplazamiento)||0:0,lab:esL?Number(s.min_labor??s.min_total)||0:0,par:Number(s.min_paradas)||0,efe:Number(s.min_efectivo)||0,vel:s.vel_kmh==null?null:Number(s.vel_kmh),km:Number(s.km)||0,palmas:s.palmas_visitadas,ha:s.ha,diag:s.diagnosticos||0,orden:Date.parse(s.inicio)||0});}
   return out;}
 function aplicarFiltros(ajustar){
-  JORF=JOR.filter(j=>(!FIL.op.size||FIL.op.has(j.usuario))&&(!FIL.lote.size||[...j.lotes].some(l=>FIL.lote.has(l)))&&(!FIL.prog.size||[...j.lotes].some(enProg)));
+  JORF=JOR.filter(j=>(!FIL.cod.size||FIL.cod.has(laborDeJ(j)))&&(!FIL.op.size||FIL.op.has(j.usuario))&&(!FIL.lote.size||[...j.lotes].some(l=>FIL.lote.has(l)))&&(!FIL.prog.size||[...j.lotes].some(enProg)));
   DIAGF=[];for(const j of JORF)for(const d of j.diags)if(loteSel(d.lote)&&enProg(d.lote)&&codOk(d))DIAGF.push({...d,_j:j});
   if(SEL&&!JORF.includes(SEL))cerrarDetalle();
   pintarMapa(ajustar);pintarPanel();dibujarPalmas();
@@ -1685,8 +1689,8 @@ const MSOP={},MSCB={};let MSK=null;
 const loteSel=l=>!FIL.lote.size||FIL.lote.has(l);
 const enProg=l=>!FIL.prog.size||FIL.prog.has(PROG.get(l));
 /* Código: el registro tiene alguno de los códigos elegidos (un 2A + 1P aparece con A y con P). */
-const codOk=d=>!FIL.cod.size||codigosPol(d).some(c=>FIL.cod.has(c));
-function msTexto(k){const s=FIL[k];if(!s.size)return 'Todos';const o=MSOP[k]||[];if(s.size<=2)return [...s].map(v=>k==='cod'?v:(o.find(x=>x.v===v)||{t:v}).t).join(', ');return s.size+' seleccionados';}
+const codOk=d=>!FIL.cod.size||FIL.cod.has(polN(d).labor);
+function msTexto(k){const s=FIL[k];if(!s.size)return 'Todos';const o=MSOP[k]||[];if(s.size<=2)return [...s].map(v=>(o.find(x=>x.v===v)||{t:v}).t).join(', ');return s.size+' seleccionados';}
 function msPintar(k){document.querySelectorAll(`.ms[data-k="${k}"]`).forEach(c=>{const b=c.querySelector('.ms-bt');b.textContent=msTexto(k);b.title=msTexto(k);c.classList.toggle('activo',FIL[k].size>0);});}   /* el filtro aparece en el visor y en Gerencia */
 function msOpciones(k,ops){MSOP[k]=ops;for(const v of [...FIL[k]])if(!ops.some(o=>o.v===v))FIL[k].delete(v);msPintar(k);if(MSK===k)msLista();}
 function msCerrar(){const p=$('#msPop');if(p)p.remove();MSK=null;}
@@ -1709,9 +1713,9 @@ function msAbrir(k,el){if(MSK===k){msCerrar();return;}msCerrar();MSK=k;const r=e
 document.addEventListener('click',e=>{const b=e.target.closest('.ms-bt');if(b){msAbrir(b.parentNode.dataset.k,b);return;}if(MSK&&document.contains(e.target)&&!e.target.closest('#msPop'))msCerrar();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&MSK)msCerrar();});
 function msSolo(k,v){FIL[k]=v==null||v===''?new Set():new Set([v]);msPintar(k);}
-/* Opciones dependientes: lotes según el programa. Código: C, M, V, S y F con su nombre completo. */
+/* Opciones dependientes: lotes según el programa. Labor: Corte, Recolección, Corte y recolección y Alce. */
 function opcionesLote(){msOpciones('lote',LOTES?LOTES.features.map(f=>f.properties._lote).filter(l=>l&&enProg(l)).sort(ordenNat).map(l=>({v:l,t:l})):[]);}
-function opcionesCod(){msOpciones('cod',COD_POL.map(x=>({v:x.c,t:etqCod(x.c)})));}
+function opcionesCod(){msOpciones('cod',LABORES_V.map(x=>({v:x.id,t:x.n})));}
 MSCB.prog=()=>{opcionesLote();aplicarFiltros(true);};
 
 
@@ -1760,6 +1764,10 @@ function pintarMapa(ajustar){
       L.marker([p.lat,p.lng],{icon:iconoParada(p.duracion_min,/diagn/i.test(p.clase||p.tipo||'')?'#2f93d5':/señal/i.test(p.clase||p.tipo||'')?'#9e9e9e':'#ff9f1c'),keyboard:false,zIndexOffset:500,pane:paneParadas()})
         .bindPopup(`<b class="h">⏸ Parada ${esc(p.n||'')}</b><br>${esc(j.evaluador)} · ${esc(j.fecha)}<br>${esc(p.hora_inicio)}–${esc(p.hora_fin)} · <b>${esc(p.duracion_min)} min</b><br>Lote: ${esc(p.lote||'—')}${p.clase?'<br>'+esc(String(p.clase).replace('con diagnóstico','con registro de cosecha')):''}`).addTo(capaPar);}
   }
+  for(const e of eventosCosecha(JORF,'descargues'))L.circleMarker([e.lat,e.lng],{radius:8,color:'#fff',weight:2,fillColor:'#1e88e5',fillOpacity:1,pane:paneParadas()})
+    .bindPopup(`<b class="h">⬇ Descargue ${esc(e.n)} · ${num(e.racimos)} R</b><br>${esc(e._j.evaluador)} · ${esc(e._j.fecha)} ${esc(e.hora||'')}<br>${esc(laborV(laborDeJ(e._j)).n)} · Lote ${esc(e.lote||'—')}`).addTo(capaPar);
+  for(const e of eventosCosecha(JORF,'alces'))L.circleMarker([e.lat,e.lng],{radius:8,color:'#fff',weight:2,fillColor:'#ff6d00',fillOpacity:1,pane:paneParadas()})
+    .bindPopup(`<b class="h">⬆ Acopio alzado ${esc(e.n)} · ${num(e.racimos)} R</b><br>${esc(e._j.evaluador)} · ${esc(e._j.fecha)} ${esc(e.hora||'')}<br>Lote ${esc(e.lote||'—')}`).addTo(capaPar);
   for(const d of ultimosPorPalma(DIAGF)){
     const m=L.circleMarker([d.lat,d.lng],{renderer:rend,radius:6,color:'#fff',weight:1.5,fillColor:colorD(d),fillOpacity:1,codigo:codPol(d),palma_id:d.palma_id}).addTo(capaDiag);
     m.on('click',ev=>{L.DomEvent.stopPropagation(ev);popupDiag(d,ev.latlng);});caja.extend([d.lat,d.lng]);}
@@ -1769,7 +1777,7 @@ function pintarMapa(ajustar){
 function etiquetaDiag(d){return [d.lote,d.linea!=null&&d.linea!==''?'L'+d.linea:null,d.palma!=null&&d.palma!==''?'P'+d.palma:null].filter(Boolean).join(' · ');}
 /* Ficha del registro de cosecha: resumen, cada conteo con su nombre, operario, fecha y hora, transitabilidad, fuente y observación. */
 function htmlDiag(d){const q=polN(d);
-  const filas=COD_INF_V.map(x=>`<div><span class="punto" style="background:${x.col}"></span><b>${x.c}:</b> ${esc(x.n)}: <b>${x.max?(q[x.k]?'Sí':'No'):num(q[x.k])}</b></div>`).join('');
+  const filas=`<div><span class="punto" style="background:#00c853"></span><b>R:</b> Racimos: <b>${num(q.racimos)}</b></div><div><b>Labor:</b> ${esc(laborV(q.labor).n)}</div>`;
   return `<b class="h">${esc(etiquetaDiag(d))}</b><br><span class="punto" style="background:${colorD(q)}"></span><b class="pol-res">${esc(textoPol(q))}</b>
     <div style="margin-top:6px;display:grid;gap:2px">${filas}
     <div><b>Operario:</b> ${esc(d.evaluador||(d._j&&d._j.evaluador)||'—')}</div>
@@ -1810,7 +1818,7 @@ function popupDiag(d,ll){
 }
 function popupLote(l,ll){
   const fil=resumenLotes().find(x=>x.lote===l);
-  L.popup().setLatLng(ll).setContent(`<b class="h">Lote ${esc(l)}</b><br>`+(fil?`${num(fil.jornadas)} jornada(s) · ${num(fil.palmas)} palmas visitadas · <b>${num(fil.ha,2)} ha</b><br>${num(fil.diag)} registros · C ${num(fil.cosechados)} · M ${num(fil.maduros)} · V ${num(fil.verdes)} · S ${num(fil.sobremaduros)}${fil.fruto_suelto?` · F ${num(fil.fruto_suelto)}`:''}`:'<span class="tenue">Sin recorridos en el periodo cargado.</span>')+
+  L.popup().setLatLng(ll).setContent(`<b class="h">Lote ${esc(l)}</b><br>`+(fil?`${num(fil.jornadas)} jornada(s) · ${num(fil.palmas)} palmas visitadas · <b>${num(fil.ha,2)} ha</b><br>${num(fil.diag)} registros · <b>${num(fil.racimos)} R</b> en palma${fil.viajes?` · ${num(fil.viajes)} viajes (${num(fil.r_descargados)} R)`:''}${fil.r_alzados?` · ${num(fil.r_alzados)} R alzados`:''}`:'<span class="tenue">Sin recorridos en el periodo cargado.</span>')+
     `<div style="margin-top:8px"><button class="btn mini" id="ppFil">Filtrar por este lote</button></div>`).openOn(mapa);
   setTimeout(()=>{const b=$('#ppFil');if(b)b.onclick=()=>{msSolo('lote',l);mapa.closePopup();aplicarFiltros(true);};},0);
 }
@@ -2051,7 +2059,7 @@ function resumenLotes(){
   // Avance = palmas distintas visitadas (sin repetir entre jornadas) ÷ palmas totales del lote
   return [...m.values()].map(f=>{const tl=totalLote(f.lote),vis=Math.min(tl||Infinity,f.ids.size+f.sinIds);const t=totalesPol(f._ds);
     return {...f,ids:undefined,_ds:undefined,operarios:f.operarios.size,ha:+f.ha.toFixed(2),distintas:vis,total_lote:tl,avance:tl?+(vis/tl*100).toFixed(1):null,
-      registradas:t.palmas,cosechados:t.cosechados,maduros:t.maduros,verdes:t.verdes,sobremaduros:t.sobremaduros,fruto_suelto:t.fruto_suelto,racimos:t.racimos,pverdes:t.pverdes==null?null:+t.pverdes.toFixed(1)};});
+      registradas:t.palmas,racimos:t.racimos,r_corte:t.corte,r_recoleccion:t.recoleccion,r_corte_recoleccion:t.corte_recoleccion,...(e=>({viajes:e.viajes,r_descargados:e.r_descargados,acopios:e.acopios,r_alzados:e.r_alzados}))(totalesEventosLote(f.lote))};});
 }
 function resumenOperarios(){
   const m=new Map();
@@ -2075,9 +2083,11 @@ function tabla(id,cols,filas,onFila){
     if(onFila)t.querySelectorAll('tbody tr[data-i]').forEach(tr=>tr.onclick=()=>onFila(v[Number(tr.dataset.i)]));},0);
   return {html,v};
 }
-/* Barras de la cosecha: racimos C, M, V y S (suma de los registros) y palmas con F. */
-function barraCodigos(){const t=totalesPol(DIAGF);const v=[['C',t.cosechados],['M',t.maduros],['V',t.verdes],['S',t.sobremaduros],['F',t.fruto_suelto]];const mx=Math.max(1,...v.map(x=>x[1]));
-  return v.map(([c,n])=>{const x=codPolDe(c);return `<div class="barra" data-bar="${c}"><span title="${esc(etqCod(c))}"><span class="punto" style="background:${x.col}"></span><b>${c}</b> ${esc(x.n.length>18?x.n.slice(0,17)+'…':x.n)}</span><span class="b"><i style="width:${100*n/mx}%;background:${x.col}"></i></span><span class="n">${num(n)}</span></div>`;}).join('');}
+/* Barras de la cosecha: racimos (R) por labor; en Alce, racimos alzados. */
+function totalesEventosLote(l){const js=JORF.filter(j=>j.lotes.has?j.lotes.has(l):true);const D=[],A=[];for(const j of JORF){for(const e of j.descargues||[])if(e.lote===l)D.push(e);for(const e of j.alces||[])if(e.lote===l)A.push(e);}
+  return {viajes:D.length,r_descargados:D.reduce((t,x)=>t+(Number(x.racimos)||0),0),acopios:A.length,r_alzados:A.reduce((t,x)=>t+(Number(x.racimos)||0),0)};}
+function barraCodigos(){const t=totalesPol(DIAGF),e=totalesEventos(JORF);const v=[['corte',t.corte],['recoleccion',t.recoleccion],['corte_recoleccion',t.corte_recoleccion],['alce',e.r_alzados]];const mx=Math.max(1,...v.map(x=>x[1]));
+  return v.map(([c,n])=>{const x=laborV(c);return `<div class="barra" data-bar="${c}"><span title="${esc(x.n)}"><span class="punto" style="background:${x.col}"></span><b>R</b> ${esc(x.corto)}</span><span class="b"><i style="width:${100*n/mx}%;background:${x.col}"></i></span><span class="n">${num(n)}</span></div>`;}).join('');}
 function pintarPanel(){
   const P=$('#panel');
   if(!JOR.length){P.innerHTML=`<div class="vacio">Elija el rango de fechas y pulse <b>CARGAR</b> para ver los recorridos sincronizados.</div>`;return;}
@@ -2089,12 +2099,12 @@ function pintarPanel(){
     P.innerHTML=`<div class="kpis">
       <div class="kpi"><b>${num(JORF.length)}</b><span>Jornadas</span></div><div class="kpi"><b>${num(ops)}</b><span>Operarios</span></div><div class="kpi"><b>${num(lotes)}</b><span>Lotes</span></div>
       <div class="kpi"><b>${num(ha,2)}</b><span>Ha recorridas</span></div><div class="kpi"><b>${num(pal)}</b><span>Palmas visitadas</span></div><div class="kpi"><b>${num(km,1)}</b><span>Km</span></div>
-      <div class="kpi"><b>${num(T.palmas)}</b><span>Palmas registradas</span></div><div class="kpi"><b>${num(T.racimos)}</b><span>Racimos cortados (C+V+S)</span></div><div class="kpi"><b>${num(fotos)}</b><span>Fotos</span></div></div>
-      <div class="kpis" id="kpisPol">${COD_INF_V.map(x=>`<div class="kpi" title="${esc(etqCod(x.c))}"><b style="color:${x.col}">${num(T[x.k])}</b><span>${x.c}: ${esc(x.n)}${x.max?' (palmas)':''}</span></div>`).join('')}
-        <div class="kpi"><b>${T.pverdes==null?'—':num(T.pverdes,1)+' %'}</b><span>% Verdes cortados (V ÷ C+V+S)</span></div><div class="kpi"><b>${T.pmaduros==null?'—':num(T.pmaduros,1)+' %'}</b><span>% Maduros dejados (M ÷ C+V+S+M)</span></div></div>
+      <div class="kpi"><b>${num(T.palmas)}</b><span>Palmas registradas</span></div><div class="kpi"><b>${num(T.racimos)}</b><span>Racimos (R) en palma</span></div><div class="kpi"><b>${num(fotos)}</b><span>Fotos</span></div></div>
+      <div class="kpis" id="kpisPol">${LABORES_V.slice(0,3).map(x=>`<div class="kpi"><b style="color:${x.col}">${num(T[x.id])}</b><span>R · ${esc(x.n)}</span></div>`).join('')}
+        ${(E=>`<div class="kpi"><b>${num(E.viajes)}</b><span>Viajes descargados (D)</span></div><div class="kpi"><b>${E.r_viaje==null?'—':num(E.r_viaje,1)}</b><span>R por viaje</span></div><div class="kpi"><b style="color:#ff6d00">${num(E.r_alzados)}</b><span>R alzados (${num(E.acopios)} acopios)</span></div>`)(totalesEventos(JORF))}</div>
       <div class="kpis" style="grid-template-columns:1fr 1fr"><div class="kpi"><b>${esc(minAh(mp))}</b><span>Tiempo en paradas</span></div><div class="kpi"><b>${ops?num(ha/Math.max(1,new Set(JORF.map(j=>j.usuario+'|'+j.fecha)).size),2):'0'}</b><span>Ha por operario-día</span></div></div>
       <h3>Cosecha por código</h3>${barraCodigos()}
-      <div class="tenue" style="font-size:12px">C, M, V y S: racimos sumados de los registros; F: palmas con fruto suelto sin recoger.</div>
+      <div class="tenue" style="font-size:12px">R en palma por labor (Corte, Recolección, Corte y recolección) y R alzados en los acopios del sendero (Alce).</div>
       ${comp.length?`<h3>Método por calle frente a buffer</h3><div class="tenue" style="font-size:13px">En ${num(comp.length)} jornada(s) con comparativo: por calle <b style="color:var(--texto)">${num(pc)}</b> palmas; buffer <b style="color:var(--texto)">${num(pb)}</b> palmas (${pb?(pc>=pb?'+':'')+num(100*(pc-pb)/pb,1)+' %':'—'}).</div>`:''}
       <div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap"><button class="btn mini" id="xGeo">⬇ GeoJSON filtrado</button><button class="btn mini" id="xJor">⬇ CSV jornadas</button><button class="btn mini" id="xDiag">⬇ CSV registros</button></div>`;
     $('#xGeo').onclick=()=>descargar(`cosecha_${$('#fDesde').value}_${$('#fHasta').value}.geojson`,JSON.stringify(geoDeJornadas(JORF)),'application/geo+json');
@@ -2104,10 +2114,10 @@ function pintarPanel(){
     const t=tabla('tJor',[{k:'fecha',t:'Fecha',asc:false},{k:'evaluador',t:'Operario'},{k:'ini',t:'Inicio'},{k:'fin',t:'Fin'},{k:'dur',t:'Duración',n:1,f:x=>esc(minAh(x.dur))},{k:'km',t:'Km',n:1,f:x=>num(x.km,2)},{k:'vel',t:'Vel. km/h',n:1,f:x=>x.vel==null?'—':num(x.vel,1)},{k:'ha',t:'Ha',n:1,f:x=>num(x.ha,2)},{k:'palmas',t:'Palmas',n:1,f:x=>num(x.palmas)},{k:'diag',t:'Registros',n:1},{k:'par',t:'Paradas',n:1},{k:'lotes',t:'Lotes'}],filas,f=>abrirDetalle(f._j));
     P.innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px"><button class="btn mini prim btRep" id="btRepT">▶ Reproducir todas a la vez</button><button class="btn mini btRep" id="btRepU">▶ Reproducir una a una</button></div><div class="tenue" style="margin-bottom:6px;font-size:12.5px">Toque una jornada para verla en el mapa y reproducir solo ese recorrido.</div>`+t.html+`<div style="margin-top:10px"><button class="btn mini" id="xJor">⬇ CSV jornadas</button></div>`;$('#xJor').onclick=()=>csvJornadas();$('#btRepT').onclick=()=>abrirRep('todos');$('#btRepU').onclick=()=>abrirRep('uno');
   }else if(TAB==='lotes'){
-    const t=tabla('tLot',[{k:'lote',t:'Lote'},{k:'registradas',t:'Palmas registradas',n:1},{k:'cosechados',t:'C',n:1},{k:'maduros',t:'M',n:1},{k:'verdes',t:'V',n:1},{k:'sobremaduros',t:'S',n:1},{k:'pverdes',t:'% verdes',n:1,f:x=>x.pverdes==null?'—':'<b>'+num(x.pverdes,1)+' %</b>'},{k:'fruto_suelto',t:'F (palmas)',n:1},{k:'tipo',t:'Tipo'},{k:'jornadas',t:'Jornadas',n:1},{k:'operarios',t:'Operarios',n:1},{k:'palmas',t:'Palmas visitadas',n:1,f:x=>num(x.palmas)},{k:'distintas',t:'Palmas distintas',n:1,f:x=>num(x.distintas)},{k:'total_lote',t:'Total lote',n:1,f:x=>x.total_lote?num(x.total_lote):'—'},{k:'avance',t:'Avance',n:1,f:x=>x.avance==null?'—':'<b>'+num(x.avance,1)+' %</b>'},{k:'ha',t:'Ha',n:1,f:x=>num(x.ha,2)},{k:'diag',t:'Registros',n:1},{k:'min_par',t:'Min. paradas',n:1}],
+    const t=tabla('tLot',[{k:'lote',t:'Lote'},{k:'registradas',t:'Palmas registradas',n:1},{k:'racimos',t:'R en palma',n:1},{k:'r_corte',t:'R corte',n:1},{k:'r_recoleccion',t:'R recolección',n:1},{k:'r_corte_recoleccion',t:'R corte y recol.',n:1},{k:'viajes',t:'Viajes (D)',n:1},{k:'r_descargados',t:'R descargados',n:1},{k:'r_alzados',t:'R alzados',n:1},{k:'tipo',t:'Tipo'},{k:'jornadas',t:'Jornadas',n:1},{k:'operarios',t:'Operarios',n:1},{k:'palmas',t:'Palmas visitadas',n:1,f:x=>num(x.palmas)},{k:'distintas',t:'Palmas distintas',n:1,f:x=>num(x.distintas)},{k:'total_lote',t:'Total lote',n:1,f:x=>x.total_lote?num(x.total_lote):'—'},{k:'avance',t:'Avance',n:1,f:x=>x.avance==null?'—':'<b>'+num(x.avance,1)+' %</b>'},{k:'ha',t:'Ha',n:1,f:x=>num(x.ha,2)},{k:'diag',t:'Registros',n:1},{k:'min_par',t:'Min. paradas',n:1}],
       resumenLotes(),f=>{msSolo('lote',f.lote);aplicarFiltros(true);});
-    P.innerHTML=`<div class="tenue" style="margin-bottom:6px;font-size:12.5px">Toque un lote para filtrar por él. <b>Avance</b> = palmas distintas visitadas (sin repetir entre jornadas) ÷ palmas totales del lote. <b>C, M, V, S</b> = racimos sumados de los registros; <b>% verdes</b> = V ÷ (C + V + S); <b>F</b> = palmas con fruto suelto sin recoger.</div>`+t.html+`<div style="margin-top:10px"><button class="btn mini" id="xLot">⬇ CSV lotes</button></div>`;
-    $('#xLot').onclick=()=>csv(`lotes_${$('#fDesde').value}_${$('#fHasta').value}.csv`,['lote','tipo','jornadas','operarios','palmas','distintas','total_lote','avance','ha','diag','registradas','cosechados','maduros','verdes','sobremaduros','racimos','pverdes','fruto_suelto','paradas','min_par'],resumenLotes());
+    P.innerHTML=`<div class="tenue" style="margin-bottom:6px;font-size:12.5px">Toque un lote para filtrar por él. <b>Avance</b> = palmas distintas visitadas (sin repetir entre jornadas) ÷ palmas totales del lote. <b>R</b> = racimos registrados en palma, por labor; <b>Viajes</b> = descargues (D) en el acopio; <b>R alzados</b> = racimos levantados por el alce en los acopios del lote.</div>`+t.html+`<div style="margin-top:10px"><button class="btn mini" id="xLot">⬇ CSV lotes</button></div>`;
+    $('#xLot').onclick=()=>csv(`lotes_${$('#fDesde').value}_${$('#fHasta').value}.csv`,['lote','tipo','jornadas','operarios','palmas','distintas','total_lote','avance','ha','diag','registradas','racimos','r_corte','r_recoleccion','r_corte_recoleccion','viajes','r_descargados','acopios','r_alzados','paradas','min_par'],resumenLotes());
   }else if(TAB==='secuencias'){
     const filas=filasSecuencias();
     const t=tabla('tSec',[{k:'orden',t:'Fecha',asc:false,f:x=>esc(x.fecha)},{k:'evaluador',t:'Operario'},{k:'sec',t:'Sec.',n:1,f:x=>x.sec||'—'},{k:'lote',t:'Lote',f:x=>x.tipo!=='lote'?'<span class="tenue">'+esc(x.lote)+'</span>':'<b>'+esc(x.lote)+'</b>'},{k:'ini',t:'Inicio'},{k:'ini_lab',t:'Inicio labor',f:x=>x.tipo==='lote'?esc(x.ini_lab):'—'},{k:'fin',t:'Fin'},
@@ -2135,11 +2145,11 @@ function marcarFila(){if(TAB==='jornadas')pintarPanel();}
 function descargar(nombre,contenido,tipo){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([contenido],{type:tipo}));a.download=nombre;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
 function csv(nombre,cols,filas){const q=v=>{if(v==null)return '';const s=typeof v==='number'?String(v).replace('.',','):String(v);return /[;"\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
   descargar(nombre,'﻿'+cols.join(';')+'\r\n'+filas.map(f=>cols.map(c=>q(f[c])).join(';')).join('\r\n'),'text/csv;charset=utf-8');}
-function csvJornadas(){csv(`jornadas_${$('#fDesde').value}_${$('#fHasta').value}.csv`,['id','fecha','usuario','evaluador','hora_inicio','hora_fin','duracion_min','km','ha','palmas','registros','racimos','n_paradas','min_paradas','velocidad_kmh','inicio_labor','fin_labor','min_despl_inicial','min_despl_entre_lotes','min_despl_final','metodo','palmas_buffer','lotes'],
-  JORF.map(j=>({id:j.id,fecha:j.fecha,usuario:j.usuario,evaluador:j.evaluador,hora_inicio:j.hora_inicio,hora_fin:j.hora_fin,duracion_min:j.duracion_min,km:j.km,ha:j.ha,palmas:j.palmas,registros:j.diags.length,racimos:j.diags.reduce((a,d)=>a+(polN(d).racimos||0),0),n_paradas:j.n_paradas,min_paradas:j.min_paradas,velocidad_kmh:j.vel==null?'':j.vel,inicio_labor:(j.tiempos||{}).hora_inicio_labor||'',fin_labor:(j.tiempos||{}).hora_fin_labor||'',min_despl_inicial:(j.tiempos||{}).min_desplazamiento_inicial??'',min_despl_entre_lotes:(j.tiempos||{}).min_desplazamiento_entre_lotes??'',min_despl_final:(j.tiempos||{}).min_desplazamiento_final??'',metodo:j.metodo,palmas_buffer:j.comp?j.comp.palmas_visitadas:'',lotes:[...j.lotes].sort(ordenNat).join(',')})));}
-/* Registros de cosecha: conteos C, M, V, S, F, transitabilidad y fuente. */
-const COLS_REG=['id','jornada_id','fecha','creado','hora','evaluador','lote','linea','palma','palma_id','codigo','resumen','cosechados','maduros','verdes','sobremaduros','fruto_suelto','racimos','transitabilidad','fuente','n_pasadas','observaciones','n_fotos','fotos','lat','lng','dist_gps_palma_m'];
-const filaReg=d=>{const q=polN(d);return {...d,cosechados:q.cosechados,maduros:q.maduros,verdes:q.verdes,sobremaduros:q.sobremaduros,fruto_suelto:q.fruto_suelto,racimos:q.racimos,codigo:codPol(q),resumen:textoPol(q),fuente:fuentePol(d),n_pasadas:Array.isArray(d.pasadas)?d.pasadas.length:(d.n_pasadas??''),fecha:d._j?d._j.fecha:'',hora:hhmm(d.creado),jornada_id:d.jornada_id||(d._j&&d._j.id)||''};};
+function csvJornadas(){csv(`jornadas_${$('#fDesde').value}_${$('#fHasta').value}.csv`,['id','fecha','usuario','evaluador','hora_inicio','hora_fin','duracion_min','km','ha','labor','palmas','registros','racimos','viajes','r_descargados','acopios','r_alzados','n_paradas','min_paradas','velocidad_kmh','inicio_labor','fin_labor','min_despl_inicial','min_despl_entre_lotes','min_despl_final','metodo','palmas_buffer','lotes'],
+  JORF.map(j=>({id:j.id,fecha:j.fecha,usuario:j.usuario,evaluador:j.evaluador,hora_inicio:j.hora_inicio,hora_fin:j.hora_fin,duracion_min:j.duracion_min,km:j.km,ha:j.ha,palmas:j.palmas,labor:laborV(laborDeJ(j)).n,registros:j.diags.length,racimos:j.diags.reduce((a,d)=>a+(polN(d).racimos||0),0),viajes:(j.descargues||[]).length,r_descargados:(j.descargues||[]).reduce((a,d)=>a+(Number(d.racimos)||0),0),acopios:(j.alces||[]).length,r_alzados:(j.alces||[]).reduce((a,d)=>a+(Number(d.racimos)||0),0),n_paradas:j.n_paradas,min_paradas:j.min_paradas,velocidad_kmh:j.vel==null?'':j.vel,inicio_labor:(j.tiempos||{}).hora_inicio_labor||'',fin_labor:(j.tiempos||{}).hora_fin_labor||'',min_despl_inicial:(j.tiempos||{}).min_desplazamiento_inicial??'',min_despl_entre_lotes:(j.tiempos||{}).min_desplazamiento_entre_lotes??'',min_despl_final:(j.tiempos||{}).min_desplazamiento_final??'',metodo:j.metodo,palmas_buffer:j.comp?j.comp.palmas_visitadas:'',lotes:[...j.lotes].sort(ordenNat).join(',')})));}
+/* Registros de cosecha: labor, racimos (R), transitabilidad y fuente. */
+const COLS_REG=['id','jornada_id','fecha','creado','hora','evaluador','lote','linea','palma','palma_id','labor','codigo','resumen','racimos','transitabilidad','fuente','n_pasadas','observaciones','n_fotos','fotos','lat','lng','dist_gps_palma_m'];
+const filaReg=d=>{const q=polN(d);return {...d,labor:laborV(q.labor).n,racimos:q.racimos,codigo:codPol(q),resumen:textoPol(q),fuente:fuentePol(d),n_pasadas:Array.isArray(d.pasadas)?d.pasadas.length:(d.n_pasadas??''),fecha:d._j?d._j.fecha:'',hora:hhmm(d.creado),jornada_id:d.jornada_id||(d._j&&d._j.id)||''};};
 function csvDiag(){csv(`cosecha_registros_${$('#fDesde').value}_${$('#fHasta').value}.csv`,COLS_REG,DIAGF.map(filaReg));}
 function geoDeJornadas(js){const feats=[];
   for(const j of js){
@@ -2166,7 +2176,7 @@ async function entrar(){
 }
 /* ---------- Utilidades comunes del visor (usuarios del paquete, carpetas por día y escritura en el repositorio de datos) ---------- */
 const nombreCorto=n=>{const p=String(n||'').trim().split(/\s+/);if(p.length>=3)return (p[2]+' '+p[0]).toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());return String(n||'').toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());};
-const LABOR_VISOR='cosecha';   /* la única labor de la App */
+const LABOR_VISOR='cosecha';   /* familia de labores de la App (Corte, Recolección, Corte y recolección, Alce) */
 let USUARIOS_PAQ=null;
 /* Usuarios del paquete de acceso (nombres, cargos, roles y labores), descifrados con la llave de la sesión. */
 async function usuariosPaquete(){
@@ -2297,7 +2307,7 @@ function pintarTablero(){
   const L=resumenLotes(),O=resumenOperarios();
   const ha=JORF.reduce((a,j)=>a+(Number(j.ha)||0),0),palmas=JORF.reduce((a,j)=>a+(Number(j.palmas)||0),0),TP=totalesPol(DIAGF);
   const kp=`<div class="ger-kpis">${kpi(num(JORF.length),'Jornadas')}${kpi(num(new Set(JORF.map(j=>j.usuario)).size),'Operarios')}${kpi(num(ha,1),'Ha recorridas')}${kpi(num(palmas),'Palmas visitadas')}
-    ${kpi(num(TP.palmas),'Palmas registradas')}${kpi(num(TP.racimos),'Racimos cortados (C + V + S)')}${kpi(num(O.length?ha/Math.max(1,O.reduce((a,o)=>a+o.dias,0)):0,2),'Ha por operario-día')}</div>`;
+    ${kpi(num(TP.palmas),'Palmas registradas')}${kpi(num(TP.racimos),'Racimos (R) en palma')}${kpi(num(O.length?ha/Math.max(1,O.reduce((a,o)=>a+o.dias,0)):0,2),'Ha por operario-día')}</div>`;
   // Productividad por operario
   const prod=O.map(o=>({...o,hah:o.min_efe>0?o.ha/(o.min_efe/60):null,pah:o.min_efe>0?o.palmas/(o.min_efe/60):null,dj:o.jornadas?o.diag/o.jornadas:0})).sort((a,b)=>(b.hah||0)-(a.hah||0));
   const maxH=Math.max(1,...prod.map(x=>x.hah||0));
@@ -2456,7 +2466,7 @@ async function generarMuestra(){
     palmas:sel.sort((a,b)=>ordenNat(a.d.lote,b.d.lote)||(Number(a.d.linea)||0)-(Number(b.d.linea)||0)||(Number(a.d.palma)||0)-(Number(b.d.palma)||0)).map(({d,j})=>({
       palma_id:String(d.palma_id),lote:d.lote,linea:d.linea,palma:d.palma,lat:d.lat,lng:d.lng,
       original:{diag_id:d.id,jornada_id:j.id,usuario:j.usuario,evaluador:j.evaluador,fecha:d.creado?hoyISO(new Date(d.creado)):String(j.fecha).slice(0,10),
-        n1_codigo:codPol(d),codigo:codPol(d),resumen:textoPol(d),cosechados:polN(d).cosechados,maduros:polN(d).maduros,verdes:polN(d).verdes,sobremaduros:polN(d).sobremaduros,fruto_suelto:polN(d).fruto_suelto}}))};
+        n1_codigo:codPol(d),codigo:codPol(d),resumen:textoPol(d),labor:polN(d).labor,racimos:polN(d).racimos}}))};
   A.guardada=false;
 }
 async function listarMuestras(){
@@ -2515,7 +2525,7 @@ ENLACES_GER.auditoria=()=>{enlazarRango();const A=GER.aud;
   const g=$('#audGen');if(g)g.onclick=async()=>{g.disabled=true;try{await generarMuestra();if(!A.muestra.palmas.length)toast('No hay registros de operarios en el periodo cargado.');}catch(e){toast(e.message,6000);}pintarGer();};
   const s=$('#audGuardar');if(s)s.onclick=async()=>{s.disabled=true;s.textContent='Guardando…';try{await ghPut(`auditoria/${A.muestra.id}.json`,JSON.stringify(A.muestra,null,1),`Auditoría: muestra ${A.muestra.id} (${A.muestra.palmas.length} palmas)`);
     A.guardada=true;A.lista=null;A.sel=A.muestra.id+'.json';toast('✅ Muestra guardada. Los supervisores la verán en la App.');}catch(e){toast(e.message,6000);}pintarGer();};
-  const c=$('#audCsv');if(c)c.onclick=()=>{const M=A.muestra;descargar(`${M.id}.csv`,'﻿'+['palma_id;lote;linea;palma;lat;lng;operario;fecha_registro;registro_original;cosechados;maduros;verdes;sobremaduros;fruto_suelto'].concat(M.palmas.map(x=>[x.palma_id,x.lote,x.linea,x.palma,x.lat,x.lng,x.original.evaluador,x.original.fecha,x.original.resumen||'',x.original.cosechados??'',x.original.maduros??'',x.original.verdes??'',x.original.sobremaduros??'',x.original.fruto_suelto??''].join(';'))).join('\r\n'),'text/csv');};
+  const c=$('#audCsv');if(c)c.onclick=()=>{const M=A.muestra;descargar(`${M.id}.csv`,'﻿'+['palma_id;lote;linea;palma;lat;lng;operario;fecha_registro;registro_original;labor;racimos'].concat(M.palmas.map(x=>[x.palma_id,x.lote,x.linea,x.palma,x.lat,x.lng,x.original.evaluador,x.original.fecha,x.original.resumen||'',x.original.labor||'',x.original.racimos??''].join(';'))).join('\r\n'),'text/csv');};
   const sel=$('#audSel');if(sel)sel.onchange=()=>{A.sel=sel.value;A.res=null;pintarGer();};
   const v=$('#audVer');if(v)v.onclick=async()=>{if(A.cargandoRes)return;A.cargandoRes=true;A.sel=$('#audSel').value;pintarGer();
     try{const f=A.lista.find(x=>x.name===A.sel);const m=JSON.parse(await blobTexto(f.sha));await resultadosMuestra(m);}catch(e){toast(e.message,6000);}
@@ -2946,85 +2956,95 @@ function enlazarFiltrosGer(){
     if(!JOR.length){enlazarRango();return;}
     const s=GER.tsub||'resumen';if(s==='pol')enlazarPolGer();else if(s==='avance')montarMapaAvance();else _e();};}
 
-/* ---------- COSECHA: indicadores C, M, V, S, % verdes, % maduros dejados y F; por lote, por semana, por operario y mapa de novedades ----------
-   Totales sobre todos los registros del periodo con los filtros (una palma registrada en dos jornadas suma las dos veces);
-   «palmas» = palmas distintas. Racimos cortados = C + V + S. % verdes = V ÷ (C + V + S). F = palmas con fruto suelto. */
-const COD_CONT=COD_INF_V.filter(x=>!x.max); // C, M, V y S (los que se cuentan); F es sí/no
-const leyendaAPB=()=>`<div class="ger-par">${COD_CONT.map(c=>`<span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${c.col};vertical-align:middle;margin-right:4px"></span>${esc(etqCod(c.c))}</span>`).join('')}</div>`;
+/* ---------- COSECHA: racimos (R) por labor, viajes descargados (D), acopios alzados (Alce); por lote, por semana, por operario y mapa de acopios ----------
+   Totales sobre todos los registros del periodo con los filtros (una palma registrada en dos jornadas suma las dos veces); «palmas» = palmas distintas.
+   R en palma: Corte, Recolección y Corte y recolección. Viajes: descargues (D) en el acopio del sendero. R alzados: racimos levantados por el Alce. */
+const SERIES_COS=[...LABORES_V.slice(0,3).map(x=>({k:x.id,t:'R '+x.corto,col:x.col})),{k:'r_alzados',t:'R alzados (Alce)',col:'#ff6d00'}];
+const leyendaAPB=()=>`<div class="ger-par">${SERIES_COS.map(c=>`<span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${c.col};vertical-align:middle;margin-right:4px"></span>${esc(c.t)}</span>`).join('')}</div>`;
 const modaTxt=a=>{const c=new Map();for(const v of a)if(v)c.set(v,(c.get(v)||0)+1);let m=null,n=0;for(const [k,v] of c)if(v>n){m=k;n=v;}return m;};
 function filasLotePol(ds){
-  const porL=new Map();for(const d of ds){const l=d.lote||'—';if(!porL.has(l))porL.set(l,[]);porL.get(l).push(d);}
+  const E=totalesEventos(JORF);
+  const porL=new Map();const fila=l=>{if(!porL.has(l))porL.set(l,{ds:[],D:[],A:[]});return porL.get(l);};
+  for(const d of ds)fila(d.lote||'—').ds.push(d);for(const e of E.D)fila(e.lote||'—').D.push(e);for(const e of E.A)fila(e.lote||'—').A.push(e);
   const TR=filasTransito(JORF,l=>loteSel(l)&&enProg(l));
-  return [...porL.entries()].map(([lote,arr])=>{const t=totalesPol(arr),tr=TR.filter(x=>x.lote===lote);
-    return {lote,prog:PROG.get(lote)||'',...t,ent:modaTxt(tr.map(x=>x.entrada))||modaTxt(arr.map(d=>d.transitabilidad))||'',sal:modaTxt(tr.map(x=>x.salida))||'',abiertos:tr.filter(x=>x.abierto).length};})
+  return [...porL.entries()].map(([lote,g])=>{const t=totalesPol(g.ds),tr=TR.filter(x=>x.lote===lote),rd=g.D.reduce((a,x)=>a+(Number(x.racimos)||0),0);
+    return {lote,prog:PROG.get(lote)||'',...t,viajes:g.D.length,r_descargados:rd,r_viaje:g.D.length?rd/g.D.length:null,acopios:g.A.length,r_alzados:g.A.reduce((a,x)=>a+(Number(x.racimos)||0),0),
+      ent:modaTxt(tr.map(x=>x.entrada))||modaTxt(g.ds.map(d=>d.transitabilidad))||'',sal:modaTxt(tr.map(x=>x.salida))||'',abiertos:tr.filter(x=>x.abierto).length};})
     .sort((a,b)=>ordenNat(a.lote,b.lote));
 }
 function barrasLotePol(fs){
-  const tc=x=>x.racimos+x.maduros;const top=fs.filter(x=>tc(x)>0).sort((a,b)=>tc(b)-tc(a)||ordenNat(a.lote,b.lote)).slice(0,40);if(!top.length)return '';
+  const tc=x=>SERIES_COS.reduce((a,c)=>a+(x[c.k]||0),0);const top=fs.filter(x=>tc(x)>0).sort((a,b)=>tc(b)-tc(a)||ordenNat(a.lote,b.lote)).slice(0,40);if(!top.length)return '';
   const mx=Math.max(1,...top.map(tc)),X0=70,AW=520,W=X0+AW+60,H=top.length*22+6;let svg='';
   top.forEach((x,i)=>{const y=i*22+3;let xx=X0;svg+=`<text x="${X0-6}" y="${y+13}" text-anchor="end" font-size="11.5" fill="#cfe">${esc(x.lote)}</text>`;
-    for(const c of COD_CONT){const v=x[c.k];if(!v)continue;const w=v/mx*AW;svg+=`<rect x="${xx.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="16" fill="${c.col}" data-lc="${esc(x.lote)}|${c.c}|${v}"><title>${esc(x.lote)} · ${esc(etqCod(c.c))}: ${v}</title></rect>`;xx+=w;}
+    for(const c of SERIES_COS){const v=x[c.k];if(!v)continue;const w=v/mx*AW;svg+=`<rect x="${xx.toFixed(1)}" y="${y}" width="${w.toFixed(1)}" height="16" fill="${c.col}" data-lc="${esc(x.lote)}|${c.k}|${v}"><title>${esc(x.lote)} · ${esc(c.t)}: ${v}</title></rect>`;xx+=w;}
     svg+=`<text x="${(xx+4).toFixed(1)}" y="${y+13}" font-size="11" fill="#9bb">${num(tc(x))}</text>`;});
-  return `<div class="ger-sec"><h3>Racimos por lote (C, M, V y S apilados)</h3><div style="overflow-x:auto"><svg id="polBarLote" width="${W}" height="${H}" role="img" aria-label="Racimos por lote">${svg}</svg></div>${leyendaAPB()}</div>`;
+  return `<div class="ger-sec"><h3>Racimos por lote y labor</h3><div style="overflow-x:auto"><svg id="polBarLote" width="${W}" height="${H}" role="img" aria-label="Racimos por lote">${svg}</svg></div>${leyendaAPB()}</div>`;
 }
 function columnasSemanaPol(ds){
-  const m=new Map();for(const d of ds){const s=semanaISO(String(d._j&&d._j.fecha||d.creado||'').slice(0,10)||hoyISO());let x=m.get(s);if(!x)m.set(s,x={cosechados:0,maduros:0,verdes:0,sobremaduros:0});const q=polN(d);for(const c of COD_CONT)x[c.k]+=q[c.k];}
+  const m=new Map();const sem=f=>semanaISO(String(f||'').slice(0,10)||hoyISO());const fila=s=>{let x=m.get(s);if(!x)m.set(s,x={corte:0,recoleccion:0,corte_recoleccion:0,r_alzados:0});return x;};
+  for(const d of ds){const q=polN(d);fila(sem(d._j&&d._j.fecha||d.creado))[q.labor]+=q.racimos;}
+  for(const e of totalesEventos(JORF).A)fila(sem(e._j.fecha)).r_alzados+=Number(e.racimos)||0;
   const sems=[...m.keys()].sort();if(!sems.length)return '';
-  const tot=s=>{const x=m.get(s);return COD_CONT.reduce((a,c)=>a+x[c.k],0);},max=Math.max(1,...sems.map(tot)),W=Math.max(320,sems.length*56),H=210,bw=Math.min(36,W/sems.length-12);let svg='';
+  const tot=s=>{const x=m.get(s);return SERIES_COS.reduce((a,c)=>a+x[c.k],0);},max=Math.max(1,...sems.map(tot)),W=Math.max(320,sems.length*56),H=210,bw=Math.min(36,W/sems.length-12);let svg='';
   sems.forEach((s,i)=>{let y=H-22;const x=i*(W/sems.length)+(W/sems.length-bw)/2,v=m.get(s);
-    for(const c of COD_CONT){const n=v[c.k];if(!n)continue;const h=n/max*(H-46);y-=h;svg+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${c.col}" data-sc="${s}|${c.c}|${n}"><title>${s} · ${esc(etqCod(c.c))}: ${n}</title></rect>`;}
+    for(const c of SERIES_COS){const n=v[c.k];if(!n)continue;const h=n/max*(H-46);y-=h;svg+=`<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${c.col}" data-sc="${s}|${c.k}|${n}"><title>${s} · ${esc(c.t)}: ${n}</title></rect>`;}
     svg+=`<text x="${(x+bw/2).toFixed(1)}" y="${(y-4).toFixed(1)}" text-anchor="middle" font-size="11" fill="#cfe">${tot(s)}</text><text x="${(x+bw/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="10.5" fill="#9bb">${s.slice(5)}</text>`;});
-  return `<div class="ger-sec"><h3>Racimos por semana (C, M, V y S apilados)</h3><div style="overflow-x:auto"><svg id="polSemana" width="${W}" height="${H}" role="img" aria-label="Racimos por semana">${svg}</svg></div>${leyendaAPB()}</div>`;
+  return `<div class="ger-sec"><h3>Racimos por semana y labor</h3><div style="overflow-x:auto"><svg id="polSemana" width="${W}" height="${H}" role="img" aria-label="Racimos por semana">${svg}</svg></div>${leyendaAPB()}</div>`;
 }
 function pintarPolGer(){
-  const ds=DIAGF;
-  if(!ds.length)return `<div class="ger-aviso">No hay registros de cosecha con los filtros elegidos (${esc(rangoTxt())}).</div>`;
+  const ds=DIAGF,E=totalesEventos(JORF);
+  if(!ds.length&&!E.D.length&&!E.A.length)return `<div class="ger-aviso">No hay registros de cosecha con los filtros elegidos (${esc(rangoTxt())}).</div>`;
   const T=totalesPol(ds);
-  const kp=`<div class="ger-kpis" id="polKpis" style="margin-top:12px">${kpi(num(T.palmas),'Palmas registradas')}${COD_INF_V.map(x=>kpi(`<span style="color:${x.col}">${num(T[x.k])}</span>`,(x.max?'Palmas ':'Total ')+etqCod(x.c))).join('')}
-    ${kpi(num(T.racimos),'Racimos cortados (C + V + S)')}${kpi(T.pverdes==null?'—':num(T.pverdes,1)+' %','% Verdes cortados = V ÷ (C + V + S)')}${kpi(T.pmaduros==null?'—':num(T.pmaduros,1)+' %','% Maduros dejados = M ÷ (C + V + S + M)')}</div>
-    <p class="tenue">${num(T.reg)} registro(s) · ${num(T.racimos)} racimos cortados. C, M, V y S suman todos los registros del periodo; F cuenta palmas con fruto suelto sin recoger.</p>`;
+  const kp=`<div class="ger-kpis" id="polKpis" style="margin-top:12px">${kpi(num(T.palmas),'Palmas con R')}${LABORES_V.slice(0,3).map(x=>kpi(`<span style="color:${x.col}">${num(T[x.id])}</span>`,'R · '+x.n)).join('')}
+    ${kpi(num(E.viajes),'Viajes descargados (D)')}${kpi(num(E.r_descargados),'R descargados')}${kpi(E.r_viaje==null?'—':num(E.r_viaje,1),'R por viaje')}${kpi(`<span style="color:#ff6d00">${num(E.r_alzados)}</span>`,`R alzados · ${num(E.acopios)} acopios (Alce)`)}</div>
+    <p class="tenue">${num(T.reg)} registro(s) en palma · ${num(T.racimos)} R. Recolección: R descargados en el acopio vs. R alzados por el Alce en el mismo lote (columna «Pendiente de alce»).</p>`;
   const FL=filasLotePol(ds);
-  const tL=tablaGer([{t:'Lote',f:x=>`<b>${esc(x.lote)}</b>`},{t:'Programa',f:x=>esc(x.prog||'—')},{t:'Palmas registradas',n:1,f:x=>num(x.palmas)},
-    ...COD_INF_V.map(c=>({t:c.max?c.c+' (palmas)':c.c,n:1,f:x=>num(x[c.k])})),{t:'Racimos cortados',n:1,f:x=>num(x.racimos)},{t:'% verdes',n:1,f:x=>x.pverdes==null?'—':num(x.pverdes,1)+' %'},
+  const tL=tablaGer([{t:'Lote',f:x=>`<b>${esc(x.lote)}</b>`},{t:'Programa',f:x=>esc(x.prog||'—')},{t:'Palmas con R',n:1,f:x=>num(x.palmas)},
+    ...LABORES_V.slice(0,3).map(c=>({t:'R '+c.corto,n:1,f:x=>num(x[c.id])})),{t:'Viajes (D)',n:1,f:x=>num(x.viajes)},{t:'R descargados',n:1,f:x=>num(x.r_descargados)},
+    {t:'R alzados',n:1,f:x=>num(x.r_alzados)},{t:'Pendiente de alce',n:1,f:x=>{const p=x.r_descargados-x.r_alzados;return x.viajes?(p>0?`<b style="color:#ffb74d">${num(p)}</b>`:num(Math.max(0,p))):'—';}},
     {t:'Transitabilidad entrada',f:x=>esc(x.ent||'—')},{t:'Transitabilidad salida',f:x=>(x.sal?esc(x.sal):'—')+(x.abiertos?` <span class="ger-chip mal">${x.abiertos} sin salida</span>`:'')}],
     FL,x=>`class="clic" data-polote="${esc(x.lote)}"`);
-  // Rendimiento por operario (estadísticas de la jornada + registros)
+  // Rendimiento por operario (estadísticas de la jornada + registros + eventos)
   const reg=new Map();for(const d of ds){const u=d._j?d._j.usuario:'';if(!reg.has(u))reg.set(u,[]);reg.get(u).push(d);}
-  const FO=resumenOperarios().map(o=>{const t=totalesPol(reg.get(o.usuario)||[]);return {...o,regp:t.palmas,rac:t.racimos,cos:t.cosechados,pver:t.pverdes,rdia:o.dias?t.cosechados/o.dias:0,pdia:o.dias?t.palmas/o.dias:0};}).sort((a,b)=>b.regp-a.regp||ordenNat(a.evaluador,b.evaluador));
-  const tO=tablaGer([{t:'Operario',f:x=>esc(x.evaluador)},{t:'Días',n:1,f:x=>num(x.dias)},{t:'Palmas registradas',n:1,f:x=>num(x.regp)},{t:'Racimos cosechados (C)',n:1,f:x=>num(x.cos)},{t:'Racimos/día',n:1,f:x=>num(x.rdia,1)},{t:'% verdes',n:1,f:x=>x.pver==null?'—':num(x.pver,1)+' %'},
-    {t:'Palmas/día',n:1,f:x=>num(x.pdia,1)},{t:'Km',n:1,f:x=>num(x.km,1)},{t:'Horas efectivas',n:1,f:x=>num(x.min_efe/60,1)},{t:'Ha',n:1,f:x=>num(x.ha,2)}],FO);
+  const ev=(u,k)=>E[k].filter(e=>e._j.usuario===u);
+  const FO=resumenOperarios().map(o=>{const t=totalesPol(reg.get(o.usuario)||[]),D=ev(o.usuario,'D'),A=ev(o.usuario,'A');const ra=A.reduce((a,x)=>a+(Number(x.racimos)||0),0);
+    const labs=[...new Set(JORF.filter(j=>j.usuario===o.usuario).map(j=>laborV(laborDeJ(j)).corto))].join(', ');
+    return {...o,labs,regp:t.palmas,rac:t.racimos+ra,viajes:D.length,ra,rdia:o.dias?(t.racimos+ra)/o.dias:0};}).sort((a,b)=>b.rac-a.rac||ordenNat(a.evaluador,b.evaluador));
+  const tO=tablaGer([{t:'Operario',f:x=>esc(x.evaluador)},{t:'Labores',f:x=>esc(x.labs||'—')},{t:'Días',n:1,f:x=>num(x.dias)},{t:'Racimos (R)',n:1,f:x=>num(x.rac)},{t:'R/día',n:1,f:x=>num(x.rdia,1)},
+    {t:'Viajes (D)',n:1,f:x=>num(x.viajes)},{t:'Palmas con R',n:1,f:x=>num(x.regp)},{t:'Km',n:1,f:x=>num(x.km,1)},{t:'Horas efectivas',n:1,f:x=>num(x.min_efe/60,1)},{t:'Ha',n:1,f:x=>num(x.ha,2)}],FO);
   return `${kp}
     <div class="ger-sec"><h3>Por lote</h3><p class="tenue">Transitabilidad predominante = la que más se registró al entrar y al salir del lote. Clic en un lote para filtrar todo por él.</p><div id="polLotes">${tL}</div>
-      <div class="ger-par"><button class="btn mini" id="xPolLote">⬇ CSV por lote</button><button class="btn mini" id="xPolReg">⬇ CSV registros (C, M, V, S, F, transitabilidad, fuente)</button></div></div>
+      <div class="ger-par"><button class="btn mini" id="xPolLote">⬇ CSV por lote</button><button class="btn mini" id="xPolReg">⬇ CSV registros (labor, R, transitabilidad, fuente)</button><button class="btn mini" id="xPolEv">⬇ CSV descargues y acopios</button></div></div>
     ${barrasLotePol(FL)}${columnasSemanaPol(ds)}
-    <div class="ger-sec"><h3>Rendimiento por operario</h3><p class="tenue">Palmas/día = palmas registradas ÷ días trabajados. Horas efectivas sin paradas.</p><div id="polOps">${tO}</div></div>
-    <div class="ger-sec"><h3>Mapa de palmas con novedad de cosecha (último registro con V, M, S o F)</h3>
-      <div class="ger-par">${['V','M','S','F'].map(c=>`<span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${codPolDe(c).col};vertical-align:middle;margin-right:4px"></span>${esc(etqCod(c))}</span>`).join('')}<span id="rvEstado" class="tenue"></span></div>
+    <div class="ger-sec"><h3>Rendimiento por operario</h3><p class="tenue">R/día = racimos (en palma y alzados) ÷ días trabajados. Horas efectivas sin paradas.</p><div id="polOps">${tO}</div></div>
+    <div class="ger-sec"><h3>Mapa de acopios: descargues (D) y alces</h3>
+      <div class="ger-par"><span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#1e88e5;vertical-align:middle;margin-right:4px"></span>Descargue del viaje (Recolección)</span><span><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#ff6d00;vertical-align:middle;margin-right:4px"></span>Acopio alzado (Alce)</span><span id="rvEstado" class="tenue"></span></div>
       <div id="gerMapaRV" style="height:460px;border-radius:14px;border:1px solid var(--borde);background:#0a1712"></div></div>`;
 }
 function montarMapaRV(){
   const el=$('#gerMapaRV');if(!el)return;
   if(GER.rv){try{GER.rv.off();GER.rv.remove();}catch(e){}GER.rv=null;}
-  const NOV=['V','M','S','F'];const rv=ultimosPorPalma(DIAGF).filter(d=>NOV.includes(codPol(d)));GER.rvN=rv.length;
-  const lotesRV=new Set(rv.map(d=>d.lote));
+  const E=totalesEventos(JORF),pts=[...E.D.map(e=>({...e,_t:'D'})),...E.A.map(e=>({...e,_t:'A'}))];GER.rvN=pts.length;
+  const lotesRV=new Set(pts.map(d=>d.lote));
   const feats=LOTES?LOTES.features.filter(f=>f.geometry&&/Polygon/.test(f.geometry.type)&&enProg(f.properties._lote)&&loteSel(f.properties._lote)&&(lotesRV.has(f.properties._lote)||FIL.lote.size)):[];
   const m=L.map(el,{zoomControl:true,attributionControl:false,preferCanvas:true,maxZoom:21});GER.rv=m;
   L.control.scale({imperial:false,position:'bottomleft'}).addTo(m);
-  // primero la vista (Leaflet necesita la vista antes de dibujar polígonos) y luego las capas
   const caja=L.latLngBounds([]),capaL=feats.length?L.geoJSON({type:'FeatureCollection',features:feats},{style:{color:'#90cdf1',weight:1,fillOpacity:.04},interactive:false}):null;
-  if(capaL)caja.extend(capaL.getBounds());for(const d of rv)if(d.lat!=null)caja.extend([d.lat,d.lng]);
+  if(capaL)caja.extend(capaL.getBounds());for(const d of pts)if(d.lat!=null)caja.extend([d.lat,d.lng]);
   if(caja.isValid())m.fitBounds(caja,{padding:[24,24],maxZoom:18,animate:false});else m.setView([1.52,-78.77],12);
   if(capaL){capaL.addTo(m);feats.forEach(f=>etiquetaLoteMC(m,f.properties._lote));}
-  for(const d of rv){if(d.lat==null)continue;const c=codPolDe(codPol(d));
-    L.circleMarker([d.lat,d.lng],{radius:6,color:'#fff',weight:1.5,fillColor:c.col,fillOpacity:1,codigo:c.c}).bindTooltip(`<b>${esc(etiquetaDiag(d))}</b><br>${esc(textoPol(d))}<br>${esc(d.evaluador||'')} · ${esc(d._j?d._j.fecha:'')}`).addTo(m);}
+  for(const d of pts){if(d.lat==null)continue;const col=d._t==='D'?'#1e88e5':'#ff6d00';
+    L.circleMarker([d.lat,d.lng],{radius:7,color:'#fff',weight:1.5,fillColor:col,fillOpacity:1,codigo:d._t}).bindTooltip(`<b>${d._t==='D'?'Descargue':'Acopio alzado'} ${esc(d.n)} · ${num(d.racimos)} R</b><br>Lote ${esc(d.lote||'—')}<br>${esc(d._j.evaluador||'')} · ${esc(d._j.fecha||'')} ${esc(d.hora||'')}`).addTo(m);}
   setTimeout(()=>m.invalidateSize(),60);
-  const e=$('#rvEstado');if(e){e.innerHTML=' · '+NOV.map(c=>`<b>${num(rv.filter(d=>codPol(d)===c).length)}</b> ${c}`).join(' · ')+' (color = novedad principal)';}
+  const e=$('#rvEstado');if(e)e.innerHTML=` · <b>${num(E.viajes)}</b> descargues (${num(E.r_descargados)} R) · <b>${num(E.acopios)}</b> acopios alzados (${num(E.r_alzados)} R)`;
 }
 function enlazarPolGer(){
   $$('#gerPanel [data-polote]').forEach(tr=>tr.onclick=()=>{msSolo('lote',tr.dataset.polote);aplicarFiltros(true);});
-  const a=$('#xPolLote');if(a)a.onclick=()=>csv(`cosecha_por_lote_${$('#fDesde').value}_${$('#fHasta').value}.csv`,['lote','prog','palmas','cosechados','maduros','verdes','sobremaduros','racimos','pverdes','fruto_suelto','ent','sal','abiertos'],
-    filasLotePol(DIAGF).map(x=>({...x,pverdes:x.pverdes==null?'':+x.pverdes.toFixed(1)})));
+  const a=$('#xPolLote');if(a)a.onclick=()=>csv(`cosecha_por_lote_${$('#fDesde').value}_${$('#fHasta').value}.csv`,['lote','prog','palmas','racimos','corte','recoleccion','corte_recoleccion','viajes','r_descargados','r_viaje','acopios','r_alzados','ent','sal','abiertos'],
+    filasLotePol(DIAGF).map(x=>({...x,r_viaje:x.r_viaje==null?'':+x.r_viaje.toFixed(1)})));
   const b=$('#xPolReg');if(b)b.onclick=()=>csvDiag();
+  const c=$('#xPolEv');if(c)c.onclick=()=>{const E=totalesEventos(JORF);csv(`cosecha_descargues_acopios_${$('#fDesde').value}_${$('#fHasta').value}.csv`,['tipo','fecha','hora','operario','labor','lote','n','racimos','lat','lng','fuente'],
+    [...E.D.map(e=>({...e,tipo:'descargue'})),...E.A.map(e=>({...e,tipo:'acopio_alzado'}))].map(e=>({tipo:e.tipo,fecha:e._j.fecha,hora:e.hora||'',operario:e._j.evaluador,labor:laborV(laborDeJ(e._j)).n,lote:e.lote,n:e.n,racimos:e.racimos,lat:e.lat,lng:e.lng,fuente:e.fuente||''})));};
   montarMapaRV();
 }
 
@@ -3174,7 +3194,7 @@ function descargarAvancePNG(){
    ===================================================================== */
 const HVV={lotes:new Map(),ind:null};
 const HVP={on:false,lote:'',pid:null,filtro:'todas',q:'',mapa:null,capa:null,lista:[]};
-const HV_FILTROS=[['todas','Todas'],['nap','R / V (no se aplica)']];
+const HV_FILTROS=[['todas','Todas'],['nap','Con racimos (R)']];
 (function(){
   const css=document.createElement('style');css.textContent=`
   #hvPanel{position:fixed;left:0;right:0;bottom:0;z-index:1500;display:grid;grid-template-columns:minmax(320px,400px) 1fr;background:var(--fondo,#06140f)}
@@ -3247,7 +3267,7 @@ async function palmasHV(lote){
   return {lista:[...out.values()].filter(x=>x.ev.length).sort((a,b)=>ordenNat(a.linea,b.linea)||ordenNat(a.palma,b.palma)),err};
 }
 const colorHV=x=>{const u=x.r.ult;if(x.ev.some(e=>e.l==='existencia'&&/aprobada/i.test(e.x)))return '#9e9e9e';return u?colorD({estado:u.e,n1_codigo:u.n1}):'#2f93d5';};
-const filtroHV={todas:()=>true,nap:x=>!!x.r.ult&&['V','M','S','F'].includes(x.r.ult.n1)};
+const filtroHV={todas:()=>true,nap:x=>!!x.r.ult&&x.r.ult.n1==='R'};
 async function abrirHVP(lote,pid){
   HVP.on=true;$('#hvPanel').hidden=false;$('#btHV').classList.add('prim');ubicarHVP();
   if(!HVP.mapa){HVP.mapa=L.map('hvMapa',{zoomControl:true,attributionControl:true,maxZoom:22});capaOrto('teselas/orto/','3',ORTO_B,17).addTo(HVP.mapa);

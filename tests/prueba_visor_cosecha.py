@@ -1,4 +1,4 @@
-"""Visor · cosecha de punta a punta: la App arma el GeoJSON de la jornada (el mismo que sincroniza) con A, P, B, R, V,
+"""Visor · cosecha de punta a punta: la App arma el GeoJSON de la jornada (el mismo que sincroniza) con C, M, V, S, F,
 fuente, pasadas y transitabilidad; el visor lo lee de GitHub (simulado) y muestra colores y leyenda, ficha de la palma,
 filtro por código, indicadores de Gerencia (🌴 Cosecha), tabla por lote y transitabilidad por lote. Datos ficticios.
 
@@ -16,29 +16,29 @@ def check(n, c, x=''):
     global ok
     print(('OK   ' if c else 'FALLA') + ' ' + n + (' · ' + str(x) if x != '' else '')); ok = ok and bool(c)
 HOY = date.today().isoformat()
-COLORES = {'A': '#00c853', 'P': '#ffab00', 'B': '#d84315', 'R': '#8d6e63', 'V': '#e53935'}
-NOMBRES = {'A': 'Inflorescencia en Antesis', 'P': 'Inflorescencia en Post-Antesis', 'B': 'Balón (Post-Antesis pasada)', 'R': 'Palma Rancho / Tapada', 'V': 'Palma con Avispas'}
+COLORES = {'C': '#00c853', 'M': '#ffab00', 'V': '#1e88e5', 'S': '#6d4c41', 'F': '#e53935'}
+NOMBRES = {'C': 'Racimo cosechado', 'M': 'Racimo maduro dejado sin cortar', 'V': 'Racimo verde cortado', 'S': 'Racimo sobremaduro / podrido', 'F': 'Fruto suelto sin recoger'}
 
 # ---- 1. La App arma los GeoJSON de dos jornadas, como al sincronizar ----
 ARMAR = """(hoy)=>{const t=h=>new Date(hoy+'T'+h+':00-05:00').toISOString();
-  const reg=(jid,ev,pid,lote,lin,num,x,h,lat)=>completarPol({id:jid+'-'+pid,palma_id:pid,jornada_id:jid,evaluador:ev,labor:'cosecha',a:x.a||0,p:x.p||0,b:x.b||0,cond:x.cond||'',
-    fuente:x.f||'boton',pasadas:x.pas||[{c:x.cond||'A',f:x.f||'boton',t:t(h)}],lote,linea:lin,numero:num,lat,lng:-78.70,creado:t(h),fecha:hoy+' '+h,modificado:t(h),
+  const reg=(jid,ev,pid,lote,lin,num,x,h,lat)=>completarPol({id:jid+'-'+pid,palma_id:pid,jornada_id:jid,evaluador:ev,labor:'cosecha',cosechados:x.c||0,maduros:x.m||0,verdes:x.v||0,sobremaduros:x.s||0,fruto_suelto:x.fs||0,
+    fuente:x.f||'boton',pasadas:x.pas||[{c:x.fs?'F':x.v?'V':'C',f:x.f||'boton',t:t(h)}],lote,linea:lin,numero:num,lat,lng:-78.70,creado:t(h),fecha:hoy+' '+h,modificado:t(h),
     transitabilidad:x.tr||'Transitable',observaciones:x.obs||'',fotos:[],sync:'pendiente',gps_acc:4,dist_gps:2.5});
   const jor=(id,u,ev,ini,fin,transito,lotes)=>({id,labor:'cosecha',evaluador:ev,usuario:u,inicio:t(ini),fin:t(fin),km:1.5,paradas:[],estado:'finalizada',
     visita:{palmas_visitadas:60,ha_recorridas:0.5,por_lote:lotes.map(l=>({lote:l,palmas_visitadas:30,ha:0.25}))},transito,secuencias:[],tiempos:null,seleccion:lotes.map(l=>({lote:l}))});
-  const pas=[{c:'A',f:'boton',t:t('07:10')},{c:'A',f:'nfc',t:t('07:10')},{c:'P',f:'boton',t:t('07:11')},{c:'B',f:'boton',t:t('07:11')}];
+  const pas=[{c:'C',f:'boton',t:t('07:10')},{c:'C',f:'nfc',t:t('07:10')},{c:'M',f:'boton',t:t('07:11')},{c:'S',f:'boton',t:t('07:11')}];
   const J1=jor('J1','op1','GOMEZ PEREZ ANDRES','07:00','08:05',[{lote:'IT01',entrada:'Transitable',t_entrada:t('07:05'),salida:'Poco transitable',t_salida:t('08:00'),cierre:'boton'}],['IT01']);
-  const R1=[reg('J1','GOMEZ PEREZ ANDRES','P101','IT01',3,1,{a:2,p:1,b:1,pas,obs:'Flor abierta'},'07:10',1.5000),
-    reg('J1','GOMEZ PEREZ ANDRES','P102','IT01',3,2,{a:1,f:'nfc'},'07:12',1.5002),
-    reg('J1','GOMEZ PEREZ ANDRES','P103','IT01',3,3,{cond:'R',f:'voz'},'07:14',1.5004),
-    reg('J1','GOMEZ PEREZ ANDRES','P104','IT01',3,4,{b:2,f:'formulario'},'07:16',1.5006)];
+  const R1=[reg('J1','GOMEZ PEREZ ANDRES','P101','IT01',3,1,{c:2,m:1,s:1,pas,obs:'Racimo pesado'},'07:10',1.5000),
+    reg('J1','GOMEZ PEREZ ANDRES','P102','IT01',3,2,{c:1,f:'nfc'},'07:12',1.5002),
+    reg('J1','GOMEZ PEREZ ANDRES','P103','IT01',3,3,{fs:1,f:'voz'},'07:14',1.5004),
+    reg('J1','GOMEZ PEREZ ANDRES','P104','IT01',3,4,{s:2,f:'formulario'},'07:16',1.5006)];
   const J2=jor('J2','op2','LOPEZ DIAZ CARLOS','08:20','09:30',[{lote:'IT05',entrada:'Poco transitable',t_entrada:t('08:30'),salida:'Transitable',t_salida:t('08:50'),cierre:'boton'},
     {lote:'IT01',entrada:'Transitable',t_entrada:t('08:55'),salida:'',t_salida:''}],['IT05','IT01']);
-  const R2=[reg('J2','LOPEZ DIAZ CARLOS','P201','IT05',1,1,{p:3,tr:'Poco transitable'},'08:31',1.5100),
-    reg('J2','LOPEZ DIAZ CARLOS','P202','IT05',1,2,{cond:'V',tr:'Poco transitable'},'08:33',1.5102),
-    reg('J2','LOPEZ DIAZ CARLOS','P203','IT05',1,3,{a:1,p:1,tr:'Poco transitable'},'08:35',1.5104),
-    reg('J2','LOPEZ DIAZ CARLOS','P204','IT05',1,4,{a:1,p:2,tr:'Poco transitable'},'08:37',1.5106),
-    reg('J2','LOPEZ DIAZ CARLOS','P102','IT01',3,2,{b:1},'09:00',1.5002)];
+  const R2=[reg('J2','LOPEZ DIAZ CARLOS','P201','IT05',1,1,{m:3,tr:'Poco transitable'},'08:31',1.5100),
+    reg('J2','LOPEZ DIAZ CARLOS','P202','IT05',1,2,{v:1,tr:'Poco transitable'},'08:33',1.5102),
+    reg('J2','LOPEZ DIAZ CARLOS','P203','IT05',1,3,{c:1,tr:'Poco transitable'},'08:35',1.5104),
+    reg('J2','LOPEZ DIAZ CARLOS','P204','IT05',1,4,{c:1,m:2,tr:'Poco transitable'},'08:37',1.5106),
+    reg('J2','LOPEZ DIAZ CARLOS','P102','IT01',3,2,{s:1},'09:00',1.5002)];
   const ahora=new Date().toISOString();
   return {g1:geoJornada(J1,R1,[],ahora,null),g2:geoJornada(J2,R2,[],ahora,null),plano:planos(R1[0]),csv:csvRegs(R1).split('\\r\\n')[0]};}"""
 errores = []
@@ -61,19 +61,25 @@ with sync_playwright() as p:
     r = app.evaluate(ARMAR, HOY)
     g1, g2 = r['g1'], r['g2']
     f101 = next(f for f in g1['features'] if f['properties'].get('palma_id') == 'P101')['properties']
-    check('Sincronización: el punto lleva A, P, B, cond, inflorescencias, fuente, labor y pasadas',
-          f101['a'] == 2 and f101['p'] == 1 and f101['b'] == 1 and f101['cond'] == '' and f101['inflorescencias'] == 4 and f101['fuente'] == 'boton'
-          and f101['labor'] == 'cosecha' and len(f101['pasadas']) == 4 and f101['n_pasadas'] == 4 and f101['nivel1'] == '2A + 1P + 1B', {k: f101.get(k) for k in ('a', 'p', 'b', 'cond', 'fuente', 'nivel1')})
+    check('Sincronización: el punto lleva C, M, V, S, F, racimos, fuente, labor y pasadas (sin a, p, b, cond, inflorescencias)',
+          (f101['cosechados'], f101['maduros'], f101['verdes'], f101['sobremaduros'], f101['fruto_suelto']) == (2, 1, 0, 1, 0) and f101['racimos'] == 3 and f101['fuente'] == 'boton'
+          and f101['labor'] == 'cosecha' and len(f101['pasadas']) == 4 and f101['n_pasadas'] == 4 and f101['nivel1'] == '2C + 1M + 1S' and f101['n1_codigo'] == 'M'
+          and not any(k in f101 for k in ('a', 'p', 'b', 'cond', 'inflorescencias')),
+          {k: f101.get(k) for k in ('cosechados', 'maduros', 'verdes', 'sobremaduros', 'fruto_suelto', 'racimos', 'fuente', 'nivel1', 'n1_codigo', 'a', 'cond', 'inflorescencias')})
     check('Sincronización: la jornada lleva la transitabilidad de cada lote y la labor',
           g1['jornada']['labor'] == 'cosecha' and g1['jornada']['transito'][0]['salida'] == 'Poco transitable' and len(g2['jornada']['transito']) == 2, g1['jornada'].get('transito'))
-    check('CSV de la App: columnas a, p, b, cond, inflorescencias, transitabilidad y fuente', all(c in r['csv'].split(';') for c in ['a', 'p', 'b', 'cond', 'inflorescencias', 'transitabilidad', 'fuente']), r['csv'][:120])
+    cab_app = r['csv'].lstrip('\ufeff').split(';')
+    check('CSV de la App: columnas cosechados, maduros, verdes, sobremaduros, fruto_suelto, racimos, transitabilidad y fuente',
+          all(c in cab_app for c in ['cosechados', 'maduros', 'verdes', 'sobremaduros', 'fruto_suelto', 'racimos', 'transitabilidad', 'fuente'])
+          and not any(c in cab_app for c in ['a', 'p', 'b', 'cond', 'inflorescencias']), r['csv'][:200])
     # Importar en otro celular (historial): recupera los campos
     imp = app.evaluate("""async(g)=>{await importarJornadaGeo(g,null);const x=await dbGet('registros','J1-P101'),y=await dbGet('registros','J1-P103'),j=await dbGet('jornadas','J1');
-      return {a:x.a,p:x.p,b:x.b,f:x.fuente,pas:(x.pasadas||[]).length,n1:x.n1,cond:y.cond,tr:(j.transito||[]).length};}""", g1)
-    check('Importar la jornada (historial) recupera A, P, B, R, fuente, pasadas y transitabilidad', imp == {'a': 2, 'p': 1, 'b': 1, 'f': 'boton', 'pas': 4, 'n1': '2A + 1P + 1B', 'cond': 'R', 'tr': 1}, imp)
-    # Registro sincronizado antes de esta versión (sin a, p, b): el visor lo lee del resumen
+      return {c:x.cosechados,m:x.maduros,v:x.verdes,s:x.sobremaduros,f:x.fuente,pas:(x.pasadas||[]).length,n1:x.n1,fs:y.fruto_suelto,n1y:y.n1,tr:(j.transito||[]).length};}""", g1)
+    check('Importar la jornada (historial) recupera C, M, V, S, F, fuente, pasadas y transitabilidad',
+          imp == {'c': 2, 'm': 1, 'v': 0, 's': 1, 'f': 'boton', 'pas': 4, 'n1': '2C + 1M + 1S', 'fs': 1, 'n1y': 'F', 'tr': 1}, imp)
+    # Registro sin los conteos (solo con el resumen «1C + 2M»): el visor lo lee del resumen
     f204 = next(f for f in g2['features'] if f['properties'].get('palma_id') == 'P204')['properties']
-    for k in ('a', 'p', 'b', 'cond', 'inflorescencias', 'pasadas', 'n_pasadas'): f204.pop(k, None)
+    for k in ('cosechados', 'maduros', 'verdes', 'sobremaduros', 'fruto_suelto', 'racimos', 'pasadas', 'n_pasadas'): f204.pop(k, None)
     EST['g1'], EST['g2'] = g1, g2
 
     # ---- 2. Visor ----
@@ -92,40 +98,45 @@ with sync_playwright() as p:
     check('Leyenda: sin enfermedades', 'Pudrición' not in ley and 'Enfermedad' not in ley)
     # Colores del mapa: último registro de cada palma
     col = vz.evaluate("(()=>{const o={};capaDiag.eachLayer(l=>{o[l.options.palma_id]=[l.options.codigo,l.options.fillColor];});return o;})()")
-    esperado = {'P101': 'A', 'P102': 'B', 'P103': 'R', 'P104': 'B', 'P201': 'P', 'P202': 'V', 'P203': 'A', 'P204': 'A'}
-    check('Mapa: una palma por marcador, color del código dominante del último registro', col == {k: [c, COLORES[c]] for k, c in esperado.items()}, col)
+    esperado = {'P101': 'M', 'P102': 'S', 'P103': 'F', 'P104': 'S', 'P201': 'M', 'P202': 'V', 'P203': 'C', 'P204': 'M'}
+    check('Mapa: una palma por marcador, color del código principal del último registro (V, M, S, F, C)', col == {k: [c, COLORES[c]] for k, c in esperado.items()}, col)
     # Ficha de la palma
     vz.evaluate("popupDiag(DIAGF.find(d=>d.palma_id==='P101'))"); time.sleep(.4)
     pop = vz.inner_text('.leaflet-popup-content')
-    check('Ficha: resumen 2A + 1P + 1B', '2A + 1P + 1B' in pop, pop[:120])
-    check('Ficha: cada conteo con su nombre completo', 'A: Inflorescencia en Antesis: 2' in pop and 'P: Inflorescencia en Post-Antesis: 1' in pop and 'B: Balón (Post-Antesis pasada): 1' in pop, pop)
+    check('Ficha: resumen 2C + 1M + 1S', '2C + 1M + 1S' in pop, pop[:120])
+    check('Ficha: cada conteo con su nombre completo', 'C: Racimo cosechado: 2' in pop and 'M: Racimo maduro dejado sin cortar: 1' in pop and 'V: Racimo verde cortado: 0' in pop
+          and 'S: Racimo sobremaduro / podrido: 1' in pop and 'F: Fruto suelto sin recoger: No' in pop, pop)
     check('Ficha: operario, fecha y hora, transitabilidad, fuente y observación',
-          'Operario: GOMEZ PEREZ ANDRES' in pop and f'Fecha y hora: {HOY} 07:10' in pop and 'Transitabilidad: Transitable' in pop and 'Fuente: Botón, Tarjeta NFC' in pop and 'Observación: Flor abierta' in pop, pop)
+          'Operario: GOMEZ PEREZ ANDRES' in pop and f'Fecha y hora: {HOY} 07:10' in pop and 'Transitabilidad: Transitable' in pop and 'Fuente: Botón, Tarjeta NFC' in pop and 'Observación: Racimo pesado' in pop, pop)
     check('Ficha: sin campos de enfermedad (cirugía, estado)', 'Cirugía' not in pop and 'Enfermedad' not in pop and 'Estado' not in pop)
     vz.evaluate("popupDiag(DIAGF.find(d=>d.palma_id==='P103'))"); time.sleep(.3)
     pop = vz.inner_text('.leaflet-popup-content')
-    check('Ficha R: código y nombre, no se aplica, fuente Voz', 'R: Palma Rancho / Tapada' in pop and 'no se puede aplicar' in pop and 'Fuente: Voz' in pop, pop[:200])
+    check('Ficha F: resumen «F», fruto suelto Sí y fuente Voz', 'F: Fruto suelto sin recoger: Sí' in pop and 'Fuente: Voz' in pop and 'C: Racimo cosechado: 0' in pop, pop[:300])
     vz.evaluate("popupDiag(DIAGF.find(d=>d.palma_id==='P204'))"); time.sleep(.3)
-    check('Ficha de un registro sin A, P, B (versión anterior): se lee del resumen', '1A + 2P' in vz.inner_text('.leaflet-popup-content'))
+    pop = vz.inner_text('.leaflet-popup-content')
+    check('Ficha de un registro sin conteos (solo resumen): se lee del resumen', '1C + 2M' in pop and 'M: Racimo maduro dejado sin cortar: 2' in pop, pop[:200])
     vz.evaluate("mapa.closePopup()")
     # Panel: resumen y pestañas
     vz.click('nav.tabs [data-tab=resumen]'); time.sleep(.3)
     kp = vz.inner_text('#kpisPol')
-    check('Resumen del visor: A 5 · P 7 · B 4 · % balón 25,0 % · R 1 · V 1', re.sub(r'\s+', ' ', kp).upper() == '5 A: INFLORESCENCIA EN ANTESIS 7 P: INFLORESCENCIA EN POST-ANTESIS 4 B: BALÓN (POST-ANTESIS PASADA) 25,0 % % BALÓN (B ÷ A+P+B) 1 PALMAS R: PALMA RANCHO / TAPADA 1 PALMAS V: PALMA CON AVISPAS', re.sub(r'\s+', ' ', kp))
+    check('Resumen del visor: C 5 · M 6 · V 1 · S 4 · F 1 palma · % verdes 10,0 % · % maduros 37,5 %', re.sub(r'\s+', ' ', kp).upper() == '5 C: RACIMO COSECHADO 6 M: RACIMO MADURO DEJADO SIN CORTAR 1 V: RACIMO VERDE CORTADO 4 S: RACIMO SOBREMADURO / PODRIDO 1 F: FRUTO SUELTO SIN RECOGER (PALMAS) 10,0 % % VERDES CORTADOS (V ÷ C+V+S) 37,5 % % MADUROS DEJADOS (M ÷ C+V+S+M)', re.sub(r'\s+', ' ', kp))
+    rk = vz.inner_text('#panel')
+    check('Resumen del visor: racimos cortados (C+V+S) = 10', re.search(r'10\s+Racimos cortados \(C\+V\+S\)', rk, re.I) is not None, re.sub(r'\s+', ' ', rk)[:300])
     vz.click('nav.tabs [data-tab=diag]'); time.sleep(.3)
     T = vz.inner_text('#panel')
     check('Pestaña REGISTROS: 9 registros con código, transitabilidad y fuente', '9 registro(s)' in T and 'Tarjeta NFC' in T and 'Formulario' in T, T[:160])
     vz.click('nav.tabs [data-tab=lotes]'); time.sleep(.3)
-    check('Pestaña LOTES: columnas A, P, B, % balón, R, V y sin PC', all(h in vz.inner_text('#tLot thead') for h in ['Palmas registradas', '% balón']) and 'PC' not in vz.inner_text('#tLot thead'))
+    th = [c.strip() for c in vz.evaluate("[...document.querySelectorAll('#tLot thead th')].map(t=>t.innerText)")]
+    check('Pestaña LOTES: columnas C, M, V, S, % verdes y F (palmas), sin PC', all(h in th for h in ['Palmas registradas', 'C', 'M', 'V', 'S', '% verdes', 'F (palmas)']) and 'PC' not in th, th)
     # Filtro por código (interfaz)
     vz.click('#filtros .ms[data-k=cod] .ms-bt'); time.sleep(.2)
     ops = vz.evaluate("[...document.querySelectorAll('#msL .ms-it span')].map(s=>s.innerText)")
-    check('Filtro Código: A, P, B, R, V con su nombre', ops == [f'{c}: {n}' for c, n in NOMBRES.items()], ops)
-    vz.click('#msL .solo[data-i="2"]'); time.sleep(.4)
+    check('Filtro Código: C, M, V, S, F con su nombre', ops == [f'{c}: {n}' for c, n in NOMBRES.items()], ops)
+    vz.click('#msL .solo[data-i="3"]'); time.sleep(.4)
     fb = vz.evaluate("({n:DIAGF.length,m:(()=>{const a=[];capaDiag.eachLayer(l=>a.push(l.options.palma_id));return a.sort().join();})(),bt:document.querySelector('#filtros .ms[data-k=cod] .ms-bt').innerText})")
-    check('Filtro Código = B: 3 registros (P101, P104 y P102) y el botón dice B', fb == {'n': 3, 'm': 'P101,P102,P104', 'bt': 'B'}, fb)
-    vz.evaluate("msSolo('cod','R');aplicarFiltros(false)"); time.sleep(.2)
-    check('Filtro Código = R: solo la palma rancho', vz.evaluate("DIAGF.map(d=>d.palma_id).join()") == 'P103')
+    check('Filtro Código = S: 3 registros (P101, P104 y P102) y el botón dice S', fb == {'n': 3, 'm': 'P101,P102,P104', 'bt': 'S'}, fb)
+    vz.evaluate("msSolo('cod','F');aplicarFiltros(false)"); time.sleep(.2)
+    check('Filtro Código = F: solo la palma con fruto suelto', vz.evaluate("DIAGF.map(d=>d.palma_id).join()") == 'P103')
     vz.evaluate("msSolo('cod',null);aplicarFiltros(false)"); time.sleep(.2)
     check('Sin filtros de enfermedad en el visor', vz.evaluate("!document.querySelector('#filtros [data-k=n1]')&&!document.querySelector('#filtros [data-k=est]')&&Object.keys(FIL).join()") == 'prog,op,lote,cod')
     # Detalle de jornada: transitabilidad
@@ -139,34 +150,42 @@ with sync_playwright() as p:
     T = vz.inner_text('#gerPanel')
     check('Gerencia: secciones Resumen, Cosecha y Mapa de avance (sin Enfermedades)', '🌴 Cosecha' in T and 'Mapa de avance de la cosecha' in T and 'Enfermedades' not in T and 'censo' not in T.lower(), re.sub(r'\s+', ' ', T)[:200])
     check('Gerencia: filtro Código en la barra (sin enfermedad ni estado)', vz.evaluate("!!document.querySelector('#gerFil .ms[data-k=cod]')&&!document.querySelector('#gerFil .ms[data-k=n1]')&&!document.querySelector('#gerFil .ms[data-k=est]')"))
-    check('Gerencia · Resumen: palmas registradas e inflorescencias', 'Palmas registradas' in T and 'Inflorescencias (A + P + B)' in T and 'Diagnósticos' not in T)
+    check('Gerencia · Resumen: palmas registradas y racimos cortados', 'Palmas registradas' in T and 'Racimos cortados (C + V + S)' in T and 'Inflorescencias' not in T and 'Diagnósticos' not in T)
     vz.click('[data-tsub=pol]'); time.sleep(1)
     K = [re.sub(r'\s+', ' ', x) for x in vz.evaluate("[...document.querySelectorAll('#polKpis .ger-kpi')].map(k=>k.innerText)")]
-    check('KPIs: 8 palmas registradas, A 5, P 7, B 4, % balón 25,0 %, R 1, V 1', K == ['8 Palmas registradas', '5 Total A: Inflorescencia en Antesis', '7 Total P: Inflorescencia en Post-Antesis', '4 Total B: Balón (Post-Antesis pasada)',
-          '25,0 % % Balón = B ÷ (A + P + B)', '1 Palmas R: Palma Rancho / Tapada', '1 Palmas V: Palma con Avispas'], K)
+    check('KPIs: 8 palmas, C 5, M 6, V 1, S 4, F 1 palma, 10 racimos cortados, % verdes 10,0 %, % maduros 37,5 %', K == ['8 Palmas registradas', '5 Total C: Racimo cosechado', '6 Total M: Racimo maduro dejado sin cortar',
+          '1 Total V: Racimo verde cortado', '4 Total S: Racimo sobremaduro / podrido', '1 Palmas F: Fruto suelto sin recoger', '10 Racimos cortados (C + V + S)',
+          '10,0 % % Verdes cortados = V ÷ (C + V + S)', '37,5 % % Maduros dejados = M ÷ (C + V + S + M)'], K)
     filas = vz.evaluate("[...document.querySelectorAll('#polLotes tbody tr')].map(t=>[...t.cells].map(c=>c.innerText.trim()))")
-    check('Por lote: IT01 4 palmas, A 3, P 1, B 4, 50,0 %, R 1, V 0, entrada Transitable, salida Poco transitable (1 sin salida)',
-          filas[0] == ['IT01', '—', '4', '3', '1', '4', '50,0 %', '1', '0', 'Transitable', 'Poco transitable 1 sin salida'], filas[0] if filas else filas)
-    check('Por lote: IT05 4 palmas, A 2, P 6, B 0, 0,0 %, R 0, V 1, entrada Poco transitable, salida Transitable',
-          len(filas) == 2 and filas[1] == ['IT05', '—', '4', '2', '6', '0', '0,0 %', '0', '1', 'Poco transitable', 'Transitable'], filas[1:] )
+    check('Por lote: IT01 4 palmas, C 3, M 1, V 0, S 4, F 1, 7 racimos, 0,0 % verdes, entrada Transitable, salida Poco transitable (1 sin salida)',
+          filas[0] == ['IT01', '—', '4', '3', '1', '0', '4', '1', '7', '0,0 %', 'Transitable', 'Poco transitable 1 sin salida'], filas[0] if filas else filas)
+    check('Por lote: IT05 4 palmas, C 2, M 5, V 1, S 0, F 0, 3 racimos, 33,3 % verdes, entrada Poco transitable, salida Transitable',
+          len(filas) == 2 and filas[1] == ['IT05', '—', '4', '2', '5', '1', '0', '0', '3', '33,3 %', 'Poco transitable', 'Transitable'], filas[1:] )
     bar = vz.evaluate("[...document.querySelectorAll('#polBarLote rect')].map(r=>r.dataset.lc)")
-    check('Gráfico por lote: barras A/P/B apiladas', sorted(bar) == sorted(['IT01|A|3', 'IT01|P|1', 'IT01|B|4', 'IT05|A|2', 'IT05|P|6']), bar)
+    check('Gráfico por lote: barras C/M/V/S apiladas', sorted(bar) == sorted(['IT01|C|3', 'IT01|M|1', 'IT01|S|4', 'IT05|C|2', 'IT05|M|5', 'IT05|V|1']), bar)
     sem = vz.evaluate("[...document.querySelectorAll('#polSemana rect')].map(r=>r.dataset.sc.split('|').slice(1).join(''))")
-    check('Gráfico por semana: A 5, P 7, B 4 apiladas', sorted(sem) == ['A5', 'B4', 'P7'], sem)
-    ops = vz.evaluate("[...document.querySelectorAll('#polOps tbody tr')].map(t=>[...t.cells].slice(0,5).map(c=>c.innerText.trim()))")
-    check('Rendimiento por operario: palmas registradas, inflorescencias y palmas/día', ops == [['LOPEZ DIAZ CARLOS', '1', '5', '9', '5,0'], ['GOMEZ PEREZ ANDRES', '1', '4', '7', '4,0']], ops)
+    check('Gráfico por semana: C 5, M 6, V 1, S 4 apiladas', sorted(sem) == ['C5', 'M6', 'S4', 'V1'], sem)
+    oth = vz.evaluate("[...document.querySelectorAll('#polOps thead th')].map(t=>t.innerText.trim())")
+    check('Rendimiento por operario: columnas de racimos cosechados, racimos/día y % verdes', all(h in oth for h in ['Racimos cosechados (C)', 'Racimos/día', '% verdes']), oth)
+    ops = vz.evaluate("[...document.querySelectorAll('#polOps tbody tr')].map(t=>[...t.cells].slice(0,6).map(c=>c.innerText.trim()))")
+    check('Rendimiento por operario: palmas registradas, racimos cosechados, racimos/día y % verdes', ops == [['LOPEZ DIAZ CARLOS', '1', '5', '2', '2,0', '25,0 %'], ['GOMEZ PEREZ ANDRES', '1', '4', '3', '3,0', '0,0 %']], ops)
     rv = vz.evaluate("({n:GER.rvN,m:(()=>{const a=[];GER.rv.eachLayer(l=>{if(l.options&&l.options.codigo)a.push(l.options.codigo+l.options.fillColor);});return a.sort();})(),e:document.querySelector('#rvEstado').innerText})")
-    check('Mapa de palmas R y V', rv['n'] == 2 and rv['m'] == ['R' + COLORES['R'], 'V' + COLORES['V']] and '1 palmas R' in rv['e'], rv)
+    check('Mapa de palmas con novedad (V, M, S o F; sin la palma solo C)', rv['n'] == 7 and rv['m'] == sorted([c + COLORES[c] for c in ['F', 'M', 'M', 'M', 'S', 'S', 'V']])
+          and '1 V' in rv['e'] and '3 M' in rv['e'] and '2 S' in rv['e'] and '1 F' in rv['e'], rv)
     with vz.expect_download() as dl: vz.click('#xPolReg')
     ruta = dl.value.path(); cab = open(ruta, encoding='utf-8-sig').read().splitlines()
     cols = cab[0].split(';')
-    check('CSV de registros: a, p, b, cond, inflorescencias, transitabilidad y fuente', all(c in cols for c in ['a', 'p', 'b', 'cond', 'inflorescencias', 'transitabilidad', 'fuente']) and len(cab) == 10, cols)
+    check('CSV de registros: cosechados, maduros, verdes, sobremaduros, fruto_suelto, racimos, transitabilidad y fuente',
+          all(c in cols for c in ['cosechados', 'maduros', 'verdes', 'sobremaduros', 'fruto_suelto', 'racimos', 'transitabilidad', 'fuente'])
+          and not any(c in cols for c in ['a', 'p', 'b', 'cond', 'inflorescencias']) and len(cab) == 10, cols)
     fila = dict(zip(cols, next(l for l in cab[1:] if 'P101' in l).split(';')))
-    check('CSV de registros: fila de P101', fila['a'] == '2' and fila['p'] == '1' and fila['b'] == '1' and fila['inflorescencias'] == '4' and fila['resumen'] == '2A + 1P + 1B' and fila['fuente'] == 'Botón, Tarjeta NFC', fila)
+    check('CSV de registros: fila de P101', (fila['cosechados'], fila['maduros'], fila['verdes'], fila['sobremaduros'], fila['fruto_suelto'], fila['racimos']) == ('2', '1', '0', '1', '0', '3')
+          and fila['resumen'] == '2C + 1M + 1S' and fila['codigo'] == 'M' and fila['fuente'] == 'Botón, Tarjeta NFC', fila)
     # Filtro de código desde Gerencia
     vz.evaluate("msSolo('cod','V');aplicarFiltros(false)"); time.sleep(.5)
     K = [re.sub(r'\s+', ' ', x) for x in vz.evaluate("[...document.querySelectorAll('#polKpis .ger-kpi')].map(k=>k.innerText)")]
-    check('Gerencia respeta el filtro Código (V: 1 palma, sin inflorescencias)', K[0] == '1 Palmas registradas' and K[4].startswith('—') and K[6].startswith('1 '), K)
+    check('Gerencia respeta el filtro Código (V: 1 palma, 1 racimo verde, 100 % verdes)', K[0] == '1 Palmas registradas' and K[1].startswith('0 ') and K[3].startswith('1 ')
+          and K[6].startswith('1 ') and K[7].startswith('100,0 %'), K)
     vz.evaluate("msSolo('cod',null);aplicarFiltros(false)"); time.sleep(.3)
     # Mapa de avance
     vz.click('[data-tsub=avance]'); time.sleep(1.2)

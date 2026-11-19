@@ -42,8 +42,8 @@ with sync_playwright() as p:
       S.gps={lat:lat0+15/ky,lng:lng0+8.7/kx,acc:4,t:Date.now()};
     }""")
     check('Palma 13 no visitada antes de registrar', not pg.evaluate("VIS.set.has('13')"))
-    pg.evaluate("sumarCodigo('A','boton')"); time.sleep(.6)
-    check('Registrada en vivo: cuenta como visitada', pg.evaluate("VIS.set.has('13')") and pg.evaluate("(S.hechos.get('13')||{}).a") == 1)
+    pg.evaluate("sumarCodigo('C','boton')"); time.sleep(.6)
+    check('Registrada en vivo: cuenta como visitada', pg.evaluate("VIS.set.has('13')") and pg.evaluate("(S.hechos.get('13')||{}).cosechados") == 1)
     check('Contador de visitadas suma 1', pg.text_content('#pjVis').strip() in ('1',), pg.text_content('#pjVis'))
     # Recalcular la jornada sin recorrido: la registrada sigue como visitada (solo ella)
     r = pg.evaluate("""async()=>{const regs=S.registros.filter(r=>r.jornada_id==='J1');const E=await calcularVisita([],115,5,'calle',true,true,null,8,regs);
