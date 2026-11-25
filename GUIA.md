@@ -97,7 +97,18 @@ Cada usuario tiene una o varias labores, que se marcan en `admin.html` (*Modific
 - **Viaje (Recolección):** los R se van sumando al viaje abierto (se ve en la barra: «Viaje 3: 12 R»). Cuando el búfalo se llena y descarga en el sendero, el operario registra **D** (botón, tarjeta o voz) **dos veces**: la primera pide confirmar y la segunda guarda el descargue con su punto GPS, el lote y los racimos del viaje. D con el viaje vacío no se registra. **Deshacer** quita el último R, D o alce.
 - **Alce:** los alceros llegan a los acopios del sendero que dejaron los recolectores y registran R por cada racimo que levantan. En el visor, los acopios descargados (azul) y los alzados (naranja) se ven en el mismo mapa y la gerencia muestra el **pendiente de alce** por lote.
 
-### Planificar e iniciar la jornada
+### Inicio de la jornada: labor y zona (pantalla con dibujos)
+La App está pensada para personal que no lee: todo tiene dibujo, color y voz.
+1. Toque el botón **INICIAR** de la barra inferior. La App dice «Toque su labor y su zona».
+2. **¿Qué labor hace hoy?** Una tarjeta grande por cada labor del usuario, con su dibujo: **Corte** (palín mecánico), **Recolección** (búfalo con carreta), **Corte y recolección** (palín y búfalo) y **Alce** (chuzo). Al tocarla, la App dice su nombre y la marca con ✔.
+3. **¿En qué zona?** Una tarjeta por zona de cosecha (Z1, Z2, Z3… de la cartografía) con un mapa pequeño de la plantación y la zona pintada de su color, y el número de lotes.
+4. **INICIAR JORNADA.** No se eligen lotes ni líneas.
+
+**Programación automática del lote:** cuando el operario entra a un lote, la App lo agrega sola a la jornada, **activa sus palmas** y avisa en grande y por voz («📍 Lote IT43»). Si el lote no es de la zona elegida, avisa en rojo «No es de su zona» (el lote se puede trabajar y queda marcado `fuera_zona`). En Alce, si el operario va por el sendero, se toma el lote más cercano (60 m o menos).
+
+**Transitabilidad:** ya no se pregunta. Cada lote queda con su hora de entrada y de salida (cambio de lote o fin de jornada).
+
+### Planificar e iniciar la jornada (supervisores: agregar lotes a mano)
 1. Pulse el botón naranja **INICIAR** de la barra inferior.
 2. Elija los lotes. Puede tocarlos en el mapa (se marcan en naranja) o buscarlos por código o programa. Se permiten varios lotes en un mismo día.
 3. Para cada lote, ajuste el **rango de líneas** que va a censar. Por defecto vienen todas.

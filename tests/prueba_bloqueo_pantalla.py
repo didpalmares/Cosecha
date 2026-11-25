@@ -1,6 +1,6 @@
 """Bloqueo de pantalla del registro (modo campo): botón 🔒, capa negra que no deja tocar, NFC activo mientras está bloqueada,
 desbloqueo manteniendo 2 s (un toque corto no desbloquea), volumen arriba (evento nativo simulado con alternarBloqueo)
-y desbloqueo automático cuando hay que elegir la transitabilidad de un lote."""
+y el cambio de lote sin preguntas (la pantalla sigue bloqueada)."""
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from comun import CANAL, INIT_VOZ
@@ -62,15 +62,12 @@ with sync_playwright() as p:
     on1 = pg.evaluate('BLOQ.on')
     pg.evaluate('alternarBloqueo()'); time.sleep(.2)
     check('Volumen arriba 2 s: bloquea y desbloquea', on1 and not pg.evaluate('BLOQ.on'))
-    # Bloqueada y entra a otro lote por NFC: se desbloquea para elegir la transitabilidad
+    # Bloqueada y entra a otro lote por NFC: el lote cambia solo, sin preguntas, y la pantalla sigue bloqueada
     pg.evaluate('bloquearPantalla()'); time.sleep(.2)
     pg.evaluate("__gps(200);void(window.__p=sumarCodigo('R','nfc'))")
-    pg.wait_for_selector('#hojaCuerpo [data-t="Transitable"]', timeout=5000)
-    check('Cambio de lote: se desbloquea para la transitabilidad', not pg.evaluate('BLOQ.on'))
-    pg.eval_on_selector('#hojaCuerpo [data-t="Poco transitable"]', 'b=>b.click()')
-    pg.wait_for_selector('#hojaCuerpo [data-t="Transitable"]', timeout=5000)
-    pg.eval_on_selector('#hojaCuerpo [data-t="Transitable"]', 'b=>b.click()')
     pg.evaluate('window.__p'); time.sleep(.3)
+    check('Cambio de lote: sigue bloqueada (no se pregunta la transitabilidad)', pg.evaluate('BLOQ.on'))
+    pg.evaluate('desbloquearPantalla()'); time.sleep(.2)
     check('Cambio de lote: Q1 = 1R', pg.evaluate("(S.hechos.get('Q1')||{}).racimos") == 1)
     # Al terminar la jornada se quita el bloqueo y el botón
     pg.evaluate('bloquearPantalla()'); time.sleep(.2)

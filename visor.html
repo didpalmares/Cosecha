@@ -878,7 +878,7 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
       <div id="lgMsg"></div>
     </form>
     <p class="tenue" style="font-size:12.5px;margin:6px 0 0">Acceso para administradores y supervisores. Requiere internet: los datos se leen del repositorio privado de GitHub.</p>
-    <div id="lgVer">VERSIÓN 20261118:2305</div>
+    <div id="lgVer">VERSIÓN 20261125:1434</div>
   </div>
 </div>
 
@@ -968,7 +968,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
    Los archivos de GitHub no cambian una vez escritos, por eso se guardan
    en caché local por su huella (sha) y solo se descargan una vez.
    ===================================================================== */
-const VERSION='20261118:2305';
+const VERSION='20261125:1434';
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=(n,d=0)=>Number(n||0).toLocaleString('es-CO',{minimumFractionDigits:d,maximumFractionDigits:d});
@@ -1024,7 +1024,7 @@ function totalesEventos(js){const D=eventosCosecha(js,'descargues'),A=eventosCos
 function filasTransito(js,filtroLote){const out=[];
   for(const j of js)for(const x of j.transito||[]){if(filtroLote&&!filtroLote(String(x.lote)))continue;const te=Date.parse(x.t_entrada),ts=Date.parse(x.t_salida);
     out.push({j,fecha:j.fecha,lote:String(x.lote),usuario:j.usuario,evaluador:j.evaluador,entrada:x.entrada||'',t_entrada:x.t_entrada||'',salida:x.salida||'',t_salida:x.t_salida||'',
-      abierto:!x.salida,min:Number.isFinite(te)&&Number.isFinite(ts)&&ts>=te?(ts-te)/60000:null,cierre:x.cierre||''});}
+      abierto:!x.salida&&!x.t_salida,min:Number.isFinite(te)&&Number.isFinite(ts)&&ts>=te?(ts-te)/60000:null,cierre:x.cierre||''});}
   return out.sort((a,b)=>String(a.t_entrada).localeCompare(String(b.t_entrada)));}
 const PROBLEMAS={PC:'Pudrición de cogollo (PC)',PE:'Pudrición de estípite (PE)',DBP:'Desprendimiento de bases peciolares (DBP)',AR:'Anillo rojo (AR)',CER:'Cercospora',DEF:'Deficiencias',
   ESP:'Espontánea',HP:'Hoja pequeña',MJ:'Mal de juventud (MJ)',ML:'Marchitez letal (ML)',MS:'Marchitez sorpresiva (MS)',PA:'Palma amarilla',PEST:'Pestalotia',RAYO:'Rayo',YAR:'Yarumo',

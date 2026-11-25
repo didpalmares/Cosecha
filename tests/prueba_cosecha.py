@@ -1,5 +1,5 @@
 """Labores de cosecha: Corte (R por palma), Recolección (R por palma + D descargue del viaje con doble pasada),
-Corte y recolección (R + D) y Alce (R en el acopio del sendero, sin palma). Existencia 0 excluida, transitabilidad,
+Corte y recolección (R + D) y Alce (R en el acopio del sendero, sin palma). Existencia 0 excluida, entrada al lote sin preguntas,
 deshacer, tarjetas NFC «R»/«D» y exportación de descargues y acopios. GitHub simulado."""
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -66,9 +66,9 @@ with sync_playwright() as p:
     pg.evaluate("S.gps=null"); tocar('R')
     check('Sin GPS: no registra', rac('P1') is None)
     pg.evaluate("__gps(1)")
-    tocar('R', 'Poco transitable'); tocar('R'); tocar('R')
+    tocar('R'); tocar('R'); tocar('R')
     r = rac('P1')
-    check('Corte: P1 = 3R', r and r['r'] == 3 and r['n1'] == '3R' and r['cod'] == 'R' and r['lab'] == 'corte' and r['tr'] == 'Poco transitable', r)
+    check('Corte: P1 = 3R', r and r['r'] == 3 and r['n1'] == '3R' and r['cod'] == 'R' and r['lab'] == 'corte', r)
     tocar('D')
     check('Corte: D no aplica', pg.evaluate("(S.jornada.descargues||[]).length") == 0 and 'no se registra descargue' in (pg.evaluate("VOZ.ultimoPol") or ''))
     pg.evaluate("deshacerPol()"); time.sleep(.2)
@@ -82,7 +82,7 @@ with sync_playwright() as p:
     pg.evaluate("__jornada('recoleccion','J2')")
     check('Recolección: botón D visible', pg.is_visible('#polD'))
     pg.evaluate("__gps(1)")
-    tocar('R', 'Transitable'); tocar('R')
+    tocar('R'); tocar('R')
     pg.evaluate("__gps(9.5)"); tocar('R', fuente='nfc')
     check('Viaje abierto = 3R', pg.evaluate("S.jornada.viaje") == 3)
     pg.evaluate("__gps(30)")

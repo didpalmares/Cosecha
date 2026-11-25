@@ -24,8 +24,22 @@
 .ic-oficina{background:none;border:0}
 .ic-oficina svg{filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
 #polBar{position:fixed;left:8px;right:8px;bottom:calc(var(--dock) + var(--inf) + 10px);z-index:950;border-radius:16px;padding:8px}
-.pol-cab{display:flex;align-items:center;gap:6px;height:34px;margin:0 2px 6px}
-#polInfo{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pol-cab{display:flex;align-items:center;gap:6px;min-height:40px;margin:0 2px 6px}
+#polInfo{flex:1;min-width:0;font-size:15px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#polInfo svg{vertical-align:middle}
+.pol-bts .cR,.pol-bts .cD{min-height:96px}.pol-bts .cR svg,.pol-bts .cD svg{width:52px;height:52px}
+.pol-bts .cR small,.pol-bts .cD small{font-size:15px;letter-spacing:.5px}
+.ini-paso{display:flex;align-items:center;gap:10px;margin:14px 0 8px;font:800 20px/1.1 Rajdhani,system-ui,sans-serif;letter-spacing:.5px}
+.ini-n{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#ffb300;color:#111;font-size:22px;flex:none}
+.ini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ini-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px 12px;border-radius:18px;border:3px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;font-family:Rajdhani,system-ui,sans-serif}
+.ini-card b{font-size:20px;line-height:1.05;text-align:center}.ini-card small{font-size:14px;opacity:.8}
+.ini-card svg{width:86px;height:86px}
+.ini-card.on{border-color:var(--c,#ffb300);background:color-mix(in srgb,var(--c,#ffb300) 30%,transparent);box-shadow:0 0 0 3px var(--c,#ffb300)}
+.ini-card.on::after{content:'✔';position:absolute;top:6px;right:10px;font-size:26px;color:#fff;text-shadow:0 1px 4px #000}
+.ini-ir{margin-top:16px;min-height:72px;font-size:24px!important}
+.lote-aviso{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:3000;padding:14px 26px;border-radius:20px;background:rgba(10,40,28,.94);border:3px solid #ffb300;color:#fff;text-align:center;font:800 34px/1.1 Rajdhani,system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.6);pointer-events:none}
+.lote-aviso small{display:block;font-size:17px;font-weight:700;opacity:.85}.lote-aviso.fuera{border-color:#ff5252}
 .pol-bts{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
 .pol-bts button{min-height:66px;border-radius:12px;border:0;padding:4px 6px;color:#111;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:Rajdhani,system-ui,sans-serif}
 .pol-bts button{position:relative}.pol-bts button b{font-size:28px;line-height:1}.pol-n{position:absolute;top:-7px;right:-5px;min-width:30px;height:30px;padding:0 6px;border-radius:15px;background:#0b1f17;color:#fff;border:2px solid #fff;font:800 19px/26px Rajdhani,system-ui,sans-serif;font-style:normal;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}.pol-n[hidden]{display:none}.pol-bts button small{font-size:12.5px;font-weight:700;line-height:1.1;text-align:center}
@@ -442,7 +456,7 @@ input[type=range]{flex:1;accent-color:var(--acento);height:28px}
 </div>
 <div id="polBar" class="glass" hidden>
   <div class="pol-cab"><div id="polInfo">—</div><button id="polNfc" class="nfc no" type="button" disabled>NFC</button><button id="polFin" class="btn" hidden>Finalizar lote</button></div>
-  <div class="pol-bts" id="polBts"><button data-c="R" class="cR" aria-label="R: Racimo"><b>R</b><small>Racimo</small><i class="pol-n" hidden></i></button><button data-c="D" class="cD" id="polD" aria-label="D: Descargue del viaje"><b>D</b><small>Descargue del viaje</small><i class="pol-n" hidden></i></button><button id="polDeshacer" class="deshacer" aria-label="Deshacer el último registro"><b>↶</b><small>Deshacer</small></button></div>
+  <div class="pol-bts" id="polBts"><button data-c="R" class="cR" aria-label="R: Racimo"><span class="pic" data-pic="racimo"></span><small><b>R</b> · RACIMO</small><i class="pol-n" hidden></i></button><button data-c="D" class="cD" id="polD" aria-label="D: Descargue del viaje"><span class="pic" data-pic="descargue"></span><small><b>D</b> · DESCARGUE</small><i class="pol-n" hidden></i></button><button id="polDeshacer" class="deshacer" aria-label="Deshacer el último registro"><b>↶</b><small>Deshacer</small></button></div>
 </div>
 <button id="btLeyenda" class="glass">LEYENDA</button>
 <div id="leyenda" class="glass" hidden></div>
@@ -952,11 +966,35 @@ const LABOR_APP='cosecha';   // familia de labores de la App (programación, sin
 /* Labores de cosecha. Corte, Recolección y Corte y recolección registran R (racimo) en la palma más cercana del lote;
    Recolección y Corte y recolección además D (descargue del viaje en el acopio del sendero). Alce registra R (racimo alzado)
    en el punto del sendero donde está el acopio, sin palma. */
-const LABORES=[{id:'corte',n:'Corte de fruto',corto:'Corte',cods:['R']},
-  {id:'recoleccion',n:'Recolección con búfalo',corto:'Recolección',cods:['R','D']},
-  {id:'corte_recoleccion',n:'Corte y recolección',corto:'Corte y recolección',cods:['R','D']},
-  {id:'alce',n:'Alce de fruto en sendero',corto:'Alce',cods:['R'],sendero:true}];
+const LABORES=[{id:'corte',n:'Corte de fruto',corto:'Corte',her:'Con palín mecánico',cods:['R']},
+  {id:'recoleccion',n:'Recolección con búfalo',corto:'Recolección',her:'Con búfalo',cods:['R','D']},
+  {id:'corte_recoleccion',n:'Corte y recolección',corto:'Corte y recolección',her:'Palín y búfalo',cods:['R','D']},
+  {id:'alce',n:'Alce de fruto en sendero',corto:'Alce',her:'Con chuzo, en el sendero',cods:['R'],sendero:true}];
 const ID_LABORES=LABORES.map(x=>x.id);
+/* Dibujos grandes para personal que no lee: Corte = palín mecánico, Recolección = búfalo con carreta, Alce = chuzo; racimo y descargue. */
+const PIC_P={
+  racimo:'<path d="M31 5 L32 15" stroke="#7A5A12" stroke-width="4" stroke-linecap="round"/><g stroke="#7F1D0E" stroke-width="1.5"><circle cx="32" cy="21" r="7" fill="#E8590C"/><circle cx="24" cy="29" r="7" fill="#C92A2A"/><circle cx="39" cy="29" r="7" fill="#F76707"/><circle cx="29" cy="37" r="7" fill="#F08C00"/><circle cx="41" cy="40" r="6" fill="#C92A2A"/><circle cx="22" cy="43" r="6" fill="#D9480F"/><circle cx="32" cy="48" r="6" fill="#E8590C"/></g>',
+  malayo:'<path d="M50 5 C61 17 60 32 50 41" fill="none" stroke="#F2B705" stroke-width="5" stroke-linecap="round"/><path d="M50 41 L41 60" stroke="#A1887F" stroke-width="6" stroke-linecap="round"/>',
+  carreta:'<rect x="5" y="36" width="42" height="15" rx="3" fill="#8D6E63" stroke="#3E2723" stroke-width="2"/><circle cx="15" cy="55" r="6" fill="#263238" stroke="#90A4AE" stroke-width="2"/><circle cx="37" cy="55" r="6" fill="#263238" stroke="#90A4AE" stroke-width="2"/><path d="M47 41 L61 37" stroke="#3E2723" stroke-width="4" stroke-linecap="round"/>',
+  arriba:'<path d="M13 58 V24 M5 33 L13 21 L21 33" fill="none" stroke="#FFB300" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>',
+  abajo:'<path d="M48 4 V30 M38 20 L48 32 L58 20" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>',
+  /* Palín mecánico: vara larga con el motor abajo y la cuchilla arriba (herramienta del cortero) */
+  palin:'<path d="M12 60 L53 9" stroke="#CFD8DC" stroke-width="4" stroke-linecap="round"/><rect x="5" y="47" width="16" height="10" rx="2" transform="rotate(-51 13 52)" fill="#FF6F00" stroke="#3E2723" stroke-width="1.5"/><path d="M50 4 L62 9 L56 17 Z" fill="#ECEFF1" stroke="#455A64" stroke-width="1.5"/>',
+  /* Búfalo (recolector) */
+  bufalo:'<ellipse cx="35" cy="38" rx="18" ry="11" fill="#455A64"/><rect x="21" y="44" width="4.5" height="13" rx="1" fill="#37474F"/><rect x="29" y="45" width="4.5" height="12" rx="1" fill="#37474F"/><rect x="39" y="45" width="4.5" height="12" rx="1" fill="#37474F"/><rect x="47" y="44" width="4.5" height="13" rx="1" fill="#37474F"/><ellipse cx="15" cy="34" rx="8.5" ry="7" fill="#546E7A"/><path d="M9 29 C2 27 3 19 10 21 M20 28 C24 22 28 23 26 29" fill="none" stroke="#ECEFF1" stroke-width="2.8" stroke-linecap="round"/><circle cx="12" cy="33" r="1.4" fill="#fff"/><path d="M53 35 Q59 40 57 47" fill="none" stroke="#455A64" stroke-width="2.2" stroke-linecap="round"/>',
+  /* Chuzo: vara con punta de metal (herramienta del alcero) */
+  chuzo:'<path d="M46 62 L46 15" stroke="#8D6E63" stroke-width="4" stroke-linecap="round"/><path d="M46 3 L52 16 L40 16 Z" fill="#CFD8DC" stroke="#455A64" stroke-width="1.5"/>'};
+const PIC_RAC=(t)=>`<g transform="${t}">${PIC_P.racimo}</g>`;
+const PIC_G=(k,t)=>`<g transform="${t}">${PIC_P[k]}</g>`;
+const PIC={racimo:PIC_P.racimo,
+  corte:PIC_RAC('translate(2 2) scale(.58)')+PIC_P.palin,
+  recoleccion:PIC_G('bufalo','translate(-2 8) scale(.72)')+PIC_G('carreta','translate(30 18) scale(.52)')+PIC_RAC('translate(35 15) scale(.36)'),
+  corte_recoleccion:PIC_G('palin','translate(18 -2) scale(.72)')+PIC_G('bufalo','translate(-4 22) scale(.62)'),
+  alce:PIC_RAC('translate(14 2) scale(.72)')+PIC_P.chuzo+PIC_P.arriba,
+  descargue:PIC_P.carreta.replace('<rect x="5" y="36"','<rect transform="rotate(-18 26 44)" x="5" y="36"')+PIC_RAC('translate(-2 30) scale(.45)')+PIC_P.abajo};
+const COLOR_LABOR={corte:'#2e7d32',recoleccion:'#1565c0',corte_recoleccion:'#7b1fa2',alce:'#ef6c00'};
+const svgPic=(k,tam=56)=>`<svg viewBox="0 0 64 64" width="${tam}" height="${tam}" aria-hidden="true">${PIC[k]||''}</svg>`;
+function pintarPics(raiz){(raiz||document).querySelectorAll('.pic[data-pic]').forEach(e=>{if(!e.firstChild)e.innerHTML=svgPic(e.dataset.pic);});}
 /* Jornadas o registros sin labor o con la labor genérica «cosecha» (versiones anteriores) se toman como Corte. */
 const laborInfo=id=>LABORES.find(x=>x.id===id)||(!id||id===LABOR_APP?LABORES[0]:null);
 const esLaborPalma=id=>{const l=laborInfo(id);return !!l&&!l.sendero;};
@@ -1020,8 +1058,27 @@ function pintarUsuario(){
 let gpsWatch=null,gpsMarca=null,gpsCirc=null,bgWatcher=null;
 function alPosicion(g){
   S.gps=g;if(document.visibilityState==='visible'){pintarGPS();if(S.seguir)centrarOperario();}
-  registrarPunto(S.gps);guiaGPS();
+  registrarPunto(S.gps);guiaGPS();revisarLoteGPS();
 }
+/* Programación automática: el lote donde está el operario (o el más cercano al sendero, en Alce) se agrega solo a la jornada,
+   se activan sus palmas y se avisa con voz y en grande. No se pregunta la transitabilidad. */
+const AUTO={ocupado:false,ult:''};
+async function revisarLoteGPS(){
+  const j=S.jornada;if(!j||!S.gps||AUTO.ocupado||(typeof PLAY!=='undefined'&&PLAY.on)||!S.lotes)return;
+  const lab=laborInfo(j.labor);let l=loteDe(S.gps.lat,S.gps.lng);if(!l&&lab&&lab.sendero)l=loteCercano(S.gps.lat,S.gps.lng);
+  if(!l||!CARTO.lotes||!CARTO.lotes[l]||(l===AUTO.ult&&enJornada(l)))return;
+  AUTO.ocupado=true;
+  try{const fuera=!!(j.zona&&zonaDe(l)&&zonaDe(l)!==j.zona);
+    if(!enJornada(l)){j.seleccion=(j.seleccion||[]).concat([{lote:l,desde:null,hasta:null,auto:true,...(fuera?{fuera_zona:true}:{})}]);
+      j.sync='pendiente';await dbPut('jornadas',j);await cargarPalmasJornada();dibujarLotes();}
+    AUTO.ult=l;await asegurarEntradaLote(l);
+  }catch(e){console.warn('lote automático',e);}finally{AUTO.ocupado=false;}
+}
+function avisoLoteGrande(l,fuera){
+  const d=document.createElement('div');d.className='lote-aviso'+(fuera?' fuera':'');
+  d.innerHTML=`${fuera?'⚠️ ':'📍 '}LOTE ${esc(l)}<small>${fuera?'No es de su zona':'Palmas activas'}</small>`;document.body.appendChild(d);setTimeout(()=>d.remove(),3500);
+  try{navigator.vibrate&&navigator.vibrate(fuera?[200,100,200]:[120]);}catch(e){}
+  if(HAY_VOZ())hablar(`Lote ${paraVoz(l)}${fuera?'. Atención: este lote no es de su zona':''}`,true);}
 /* ---------- Registro con la pantalla bloqueada ----------
    APK: servicio de ubicación en primer plano + bloqueo parcial de CPU durante la jornada + exención de ahorro de batería.
    En Xiaomi (MIUI) además hay que permitir «Inicio automático» y poner el ahorro de batería en «Sin restricciones». */
@@ -1080,7 +1137,7 @@ function recEncolar(arr){
   REC.cola=REC.cola.then(async()=>{let n=0;
     for(const p of arr){if(!S.jornada||S.jornada.id!==REC.jid)break;const t=Number(p.t);if(!(t>recUltimo()))continue;REC.ult=t;
       const g={lat:Number(p.lat),lng:Number(p.lng),acc:Number(p.acc)||99,t,nat:1};S.gps=g;try{await registrarPunto(g);}catch(e){}n++;}
-    if(n){if(document.visibilityState==='visible'){try{pintarGPS();if(S.seguir)centrarOperario();}catch(e){}}try{guiaGPS();}catch(e){}}
+    if(n){if(document.visibilityState==='visible'){try{pintarGPS();if(S.seguir)centrarOperario();}catch(e){}}try{guiaGPS();}catch(e){}revisarLoteGPS();}
   }).catch(()=>{});
   return REC.cola;}
 async function recDrenar(){
@@ -1333,21 +1390,63 @@ async function confirmarPlan(){
     const sel=S.plan.map(p=>({...p}));S.plan=[];cerrarHoja();await iniciarJornada(sel,SES.nombre);
   }
 }
+/* ---------- Zonas de cosecha (propiedad ZonaCosecha de los lotes) ---------- */
+const zonaDe=l=>{const f=S.lotes&&S.lotes.features.find(x=>x.properties._lote===String(l));return f?String(f.properties.ZonaCosecha||''):'';};
+const zonasCosecha=()=>[...new Set((S.lotes?S.lotes.features:[]).map(f=>String(f.properties.ZonaCosecha||'')).filter(Boolean))].sort(ordenNat);
+const lotesZona=z=>(S.lotes?S.lotes.features:[]).filter(f=>String(f.properties.ZonaCosecha||'')===z).map(f=>String(f.properties._lote));
+const COLORES_ZONA=['#2e7d32','#1565c0','#ef6c00','#7b1fa2','#00838f','#c62828'];
+const colorZona=z=>COLORES_ZONA[Math.max(0,zonasCosecha().indexOf(z))%COLORES_ZONA.length];
+const nombreZona=z=>String(z).replace(/^Z(\d+)$/i,'ZONA $1');
+const vozZona=z=>String(z).replace(/^Z(\d+)$/i,(m,n)=>'zona '+paraVoz(n));
+/* Mapa pequeño de la plantación con la zona resaltada (dibujo para elegir la zona sin leer). */
+function miniMapaZona(z){
+  const fs=S.lotes?S.lotes.features:[];if(!fs.length)return '';
+  if(!S._miniCaja){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const f of fs){const k=f._caja;if(!k)continue;x0=Math.min(x0,k[0]);y0=Math.min(y0,k[1]);x1=Math.max(x1,k[2]);y1=Math.max(y1,k[3]);}S._miniCaja=[x0,y0,x1,y1];}
+  const [x0,y0,x1,y1]=S._miniCaja,W=150,H=100,e=Math.min(W/(x1-x0||1),H/(y1-y0||1));
+  const P=c=>((c[0]-x0)*e).toFixed(1)+','+((y1-c[1])*e).toFixed(1);let out='';
+  for(const f of fs){const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;const en=String(f.properties.ZonaCosecha||'')===z;
+    for(const pol of polys){const a=pol[0],paso=Math.max(1,Math.floor(a.length/24));const pts=a.filter((_,i)=>i%paso===0).map(P).join(' ');
+      out+=`<polygon points="${pts}" fill="${en?colorZona(z):'#4a5f55'}" fill-opacity="${en?1:.35}" stroke="${en?'#fff':'none'}" stroke-width=".4"/>`;}}
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-height:96px" aria-hidden="true">${out}</svg>`;}
+/* Pantalla de inicio de la jornada: 1) labor con su dibujo, 2) zona con su mapa, 3) INICIAR. Todo grande y con voz. */
+function abrirInicioCosecha(){
+  if(!S.lotes){toast('La cartografía aún no está cargada.');return;}
+  const labs=misLabores(),zs=zonasCosecha();laborElegida();
+  if(!zs.includes(S.zonaSel))S.zonaSel=zs.includes(S.cfg.ultimaZona)?S.cfg.ultimaZona:(zs.length===1?zs[0]:'');
+  abrirHoja('Iniciar jornada',`
+    <div class="ini-paso"><span class="ini-n">1</span>👷 ¿QUÉ LABOR HACE HOY?</div>
+    <div class="ini-grid" id="iniLab">${labs.map(id=>{const l=laborInfo(id);return `<button type="button" class="ini-card" data-lab="${id}" style="--c:${COLOR_LABOR[id]}" aria-label="${esc(l.n)}">${svgPic(id,86)}<b>${esc(l.corto.toUpperCase())}</b><small>${esc(l.her||l.n)}</small></button>`;}).join('')}</div>
+    <div class="ini-paso"><span class="ini-n">2</span>🗺️ ¿EN QUÉ ZONA?</div>
+    <div class="ini-grid" id="iniZona">${zs.length?zs.map(z=>`<button type="button" class="ini-card" data-zona="${esc(z)}" style="--c:${colorZona(z)}" aria-label="${esc(nombreZona(z))}">${miniMapaZona(z)}<b>${esc(nombreZona(z))}</b><small>${num(lotesZona(z).length)} lotes</small></button>`).join(''):'<p class="tenue">La cartografía no tiene zonas de cosecha: se trabaja en toda la plantación.</p>'}</div>
+    <button class="btn nar ancho grande ini-ir" id="iniOk">${IC.play} INICIAR JORNADA</button>
+    <p class="tenue" style="text-align:center">El lote se elige solo: cuando usted entra a un lote, sus palmas se activan.</p>`,{media:true});
+  const pintar=()=>{document.querySelectorAll('#iniLab [data-lab]').forEach(b=>b.classList.toggle('on',b.dataset.lab===S.laborSel));
+    document.querySelectorAll('#iniZona [data-zona]').forEach(b=>b.classList.toggle('on',b.dataset.zona===S.zonaSel));
+    const ok=!!S.laborSel&&(!zs.length||!!S.zonaSel);$('#iniOk').disabled=!ok;$('#iniOk').style.opacity=ok?1:.45;};
+  document.querySelectorAll('#iniLab [data-lab]').forEach(b=>b.onclick=()=>{S.laborSel=b.dataset.lab;pintar();if(HAY_VOZ())hablar(laborInfo(S.laborSel).n,true);});
+  document.querySelectorAll('#iniZona [data-zona]').forEach(b=>b.onclick=()=>{S.zonaSel=b.dataset.zona;pintar();if(HAY_VOZ())hablar(vozZona(S.zonaSel),true);
+    const fs=S.lotes.features.filter(f=>String(f.properties.ZonaCosecha||'')===S.zonaSel);const k=cajaDe(fs);if(k)mapa.fitBounds(k,{padding:[30,30]});});
+  $('#iniOk').onclick=async()=>{if($('#iniOk').disabled){if(HAY_VOZ())hablar(!S.laborSel?'Toque su labor':'Toque su zona',true);return;}
+    if(!SES){alert('Inicie sesión para iniciar una jornada.');return;}
+    S.cfg.ultimaZona=S.zonaSel;cerrarHoja();await iniciarJornada([],SES.nombre);};
+  pintar();if(HAY_VOZ())hablar('Toque su labor y su zona. Luego toque iniciar.',true);
+}
 function laborElegida(){const l=misLabores();if(!l.includes(S.laborSel))S.laborSel=l.includes(S.cfg.ultimaLabor)?S.cfg.ultimaLabor:l[0];return S.laborSel;}
 function idJornada(){const d=new Date();return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}-${uid().slice(0,6)}`;}
 async function iniciarJornada(sel,evaluador){try{revisarHora();}catch(e){}
   {const m=motivoNoIniciar();if(m){avisarFueraPlantacion(m);return;}}
   const prueba=S.pruebaFuera?{...S.pruebaFuera,usuario:SES?SES.u:''}:null;
   const labor=laborElegida();S.cfg.ultimaLabor=labor;
-  const j={id:idJornada(),labor,viaje:0,descargues:[],alces:[],...(prueba?{prueba}:{}),inicio:new Date().toISOString(),inicio_real:new Date(ahoraReal()).toISOString(),hora:estadoHora(),fin:null,evaluador,usuario:SES?SES.u:'',dispositivo:S.cfg.dispositivo,seleccion:sel,estado:'activa',
+  const zona=sel.length?'':(S.zonaSel||'');
+  const j={id:idJornada(),labor,zona,viaje:0,descargues:[],alces:[],...(prueba?{prueba}:{}),inicio:new Date().toISOString(),inicio_real:new Date(ahoraReal()).toISOString(),hora:estadoHora(),fin:null,evaluador,usuario:SES?SES.u:'',dispositivo:S.cfg.dispositivo,seleccion:sel,estado:'activa',
     km:0,sync:'pendiente',version_app:VERSION,carto_version:CARTO.version,modo_programacion:modoProgDe(MPROG_APP.c,LABOR_APP),densidad:Number(S.cfg.densidad)||115,buffer:Number(S.cfg.bufferVisita)||5,bufferTerraza:Number(S.cfg.bufferTerraza)||8,metodoVisita:S.cfg.metodoVisita||'calle',paradaRadio:Number(S.cfg.paradaRadio)||20,paradaMin:Number(S.cfg.paradaMin)||5};
   await dbPut('jornadas',j);S.jornada=j;S.cfg.jornadaActiva=j.id;S.cfg.evaluador=evaluador;await guardarCfg();
   TRACK.ultimo=null;TRACK.n=0;TRACK.pts=[];prepararTrack([]);VIS=nuevoEstadoVisita(j.densidad,j.buffer,j.metodoVisita,j.bufferTerraza);PAR.lista=[];capaParadas.clearLayers();
-  await cargarPalmasJornada();iniciarGPS();pantallaEncendida(true);actualizarJornadaUI();dibujarLotes();encuadrar(sel.map(s=>s.lote));
+  await cargarPalmasJornada();iniciarGPS();pantallaEncendida(true);actualizarJornadaUI();dibujarLotes();encuadrar(sel.length?sel.map(s=>s.lote):lotesZona(zona));setTimeout(()=>revisarLoteGPS(),1500);
   if(S.cfg.seguir!==false){S.seguir=true;pintarSeguir();S.pausaSeguir=Date.now()+12000;} // primero muestra los lotes; luego centra al operario
   setTimeout(()=>revisarSegundoPlano(false),2500);
   if(j.prueba){toast(`🧪 Jornada de PRUEBA (Super administrador)${j.prueba.motivo==='sin_gps'?' sin GPS':' fuera de la plantación'}. Se guarda aparte, en pruebas.`,7000);}
-  else toast(`▶ Jornada iniciada: ${sel.length} lote(s). Se está guardando el recorrido.`,4000);
+  else toast(`▶ Jornada iniciada · ${(laborInfo(labor)||{}).n||''}${zona?' · '+nombreZona(zona):''}. Se está guardando el recorrido.`,4000);
   hablar(msjInicio(),true);
   setTimeout(()=>ortoLotes(sel.map(s=>s.lote),true),3000); // detalle de la ortofoto de los lotes elegidos, en segundo plano
   try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission().then(()=>avisoJornada(true));else avisoJornada(true);}catch(e){}
@@ -1378,7 +1477,7 @@ function actualizarJornadaUI(){try{dibujarEventosCosecha();}catch(e){}
 }
 function relojJornada(){if(!S.jornada)return;$('#pjIni').textContent=hhmm(S.jornada.inicio);$('#pjTiempo').textContent=$('#pjMiniT').textContent=fmtDur(Date.now()-Date.parse(S.jornada.inicio));$('#pjKm').textContent=(S.jornada.km||0).toFixed(2);}
 setInterval(relojJornada,1000);
-$('#btJornada').onclick=()=>{if(PLAY.on)return;if(S.jornada)panelJornada();else{const m=motivoNoIniciar();if(m){avisarFueraPlantacion(m);return;}abrirPlanificador('nueva');}};
+$('#btJornada').onclick=()=>{if(PLAY.on)return;if(S.jornada)panelJornada();else{const m=motivoNoIniciar();if(m){avisarFueraPlantacion(m);return;}abrirInicioCosecha();}};
 $('#pj').onclick=()=>panelJornada();
 /* Panel de la jornada plegable: inicia oculto (solo la píldora con tiempo y avance) para no ocupar el mapa. */
 S.pjAbierto=false;
@@ -1939,29 +2038,21 @@ function completarPol(r){
 const vozRacimos=n=>`${n===1?'un':paraVoz(n)} ${n===1?'racimo':'racimos'}`;
 function frasePol(r){const n=r&&r.racimos||0;return n?vozRacimos(n):'';}
 
-/* ----- Transitabilidad del lote: obligatoria al entrar y al salir ----- */
-function tramoAbierto(){const j=S.jornada;if(!j||!Array.isArray(j.transito))return null;return j.transito.find(t=>!t.salida)||null;}
-function elegirTransito(lote,momento){if(typeof BLOQ!=='undefined'&&BLOQ.on){desbloquearPantalla();if(HAY_VOZ())hablar(`Elija la transitabilidad de ${momento==='entrada'?'entrada al':'salida del'} lote ${paraVoz(lote)}`,true);}
-  return new Promise(res=>{let listo=false;
-  abrirHoja(`Transitabilidad · ${momento==='entrada'?'entrada al':'salida del'} lote ${lote}`,`
-    <p>${momento==='entrada'?'Antes de registrar palmas en este lote':'Para cerrar este lote'}, elija cómo está la transitabilidad:</p>
-    <div style="display:grid;gap:10px">${TRANSIT.map(t=>`<button type="button" class="btn ancho grande${t==='Transitable'?' prim':''}" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>`,
-    {alCerrar:()=>{if(!listo)res(null);}});
-  document.querySelectorAll('#hojaCuerpo [data-t]').forEach(b=>b.onclick=()=>{listo=true;const t=b.dataset.t;cerrarHoja();res(t);});});}
+/* ----- Tramos de lote (entrada y salida con su hora): se abren y cierran solos, sin preguntar la transitabilidad ----- */
+function tramoAbierto(){const j=S.jornada;if(!j||!Array.isArray(j.transito))return null;return j.transito.find(t=>!t.t_salida&&!t.salida)||null;}
 async function cerrarTramo(t,motivo){
-  const v=await elegirTransito(t.lote,'salida');if(!v)return false;
-  t.salida=v;t.t_salida=new Date(ahoraReal()).toISOString();t.cierre=motivo||'boton';
+  t.t_salida=new Date(ahoraReal()).toISOString();t.cierre=motivo||'auto';
   S.jornada.sync='pendiente';await dbPut('jornadas',S.jornada);await marcarJornadaPendiente(S.jornada.id);pintarPolBar();return true;}
-/* Devuelve true cuando el lote tiene la entrada registrada (la pide si falta; si había otro lote abierto, primero pide su salida). */
+/* Abre el tramo del lote (y cierra el anterior). Siempre devuelve true: no hay preguntas. */
 async function asegurarEntradaLote(lote){
   const j=S.jornada;if(!j||!lote)return true;if(!Array.isArray(j.transito))j.transito=[];
-  const ab=tramoAbierto();if(ab&&ab.lote===lote)return true;
-  if(ab){toast(`Cierre el lote ${ab.lote}: elija la transitabilidad de salida.`,4000);if(!await cerrarTramo(ab,'cambio_lote'))return false;}
-  const v=await elegirTransito(lote,'entrada');if(!v)return false;
-  j.transito.push({lote:String(lote),entrada:v,t_entrada:new Date(ahoraReal()).toISOString(),salida:'',t_salida:''});
-  j.sync='pendiente';await dbPut('jornadas',j);await marcarJornadaPendiente(j.id);pintarPolBar();return true;}
+  const ab=tramoAbierto();if(ab&&ab.lote===String(lote))return true;
+  if(ab)await cerrarTramo(ab,'cambio_lote');
+  const fuera=!!(j.zona&&zonaDe(lote)&&zonaDe(lote)!==j.zona);
+  j.transito.push({lote:String(lote),entrada:'',t_entrada:new Date(ahoraReal()).toISOString(),salida:'',t_salida:'',...(fuera?{fuera_zona:true}:{})});
+  j.sync='pendiente';await dbPut('jornadas',j);await marcarJornadaPendiente(j.id);pintarPolBar();avisoLoteGrande(String(lote),fuera);return true;}
 async function finalizarLoteActual(){const ab=tramoAbierto();if(!ab){toast('No hay un lote abierto.');return;}
-  if(await cerrarTramo(ab,'boton'))toast(`✅ Lote ${ab.lote} cerrado (${ab.salida}).`);}
+  await cerrarTramo(ab,'boton');toast(`✅ Lote ${ab.lote} cerrado.`);}
 
 /* ----- Registro rápido: tarjeta NFC, botón de la barra o voz. Va a la palma existente más cercana a radioSel o menos. ----- */
 const DESHACER=[];
@@ -1981,6 +2072,7 @@ async function sumarCodigo(c,fuente){
     if(!lab.cods.includes(c)){avisoPol(c==='D'?`En ${lab.corto} no se registra descargue.`:`El código ${c} no aplica en ${lab.corto}.`,true);return;}
     if(!S.gps){iniciarGPS();avisoPol('Sin señal GPS. Espere la ubicación.',true);return;}
     if(c==='D'){await registrarDescargue(fuente);return;}
+    for(let k=0;AUTO.ocupado&&k<100;k++)await esperar(30);await revisarLoteGPS();
     if(lab.sendero){await registrarAlce(fuente);return;}
     const {f,R}=palmaCercanaPol();
     if(!f){avisoPol(`No hay palma a ${R} metros o menos.`,true);return;}
@@ -2087,7 +2179,7 @@ function pintarPolBar(rUlt){
   if(!on){sincronizarBloqueo();return;}
   const ab=tramoAbierto(),lab=laborInfo(S.jornada.labor),j=S.jornada,conD=lab.cods.includes('D');
   $('#polD').hidden=!conD;$('#polBts').classList.toggle('sin-d',!conD);
-  const cab=`<span class="pol-lab">${esc(lab.corto)}</span>`+(ab?`<b>Lote ${esc(ab.lote)}</b> · ${esc(ab.entrada)}`:'<b>Sin lote abierto</b>');
+  const cab=`<span class="pol-lab" style="background:${COLOR_LABOR[lab.id]};color:#fff">${svgPic(lab.id,26)} ${esc(lab.corto)}</span>`+(ab?`<b style="font-size:18px">📍 ${esc(ab.lote)}</b>`:'<b>📍 Camine a su lote</b>')+(j.zona?` <span class="tenue">${esc(nombreZona(j.zona))}</span>`:'');
   let nR=0;
   if(lab.sendero){const a=(j.alces||[])[(j.alces||[]).length-1];const cerca=a&&S.gps&&dist(a.lat,a.lng,S.gps.lat,S.gps.lng)<=20;nR=cerca?a.racimos:0;
     $('#polInfo').innerHTML=cab+(S.gps?(cerca?` · Acopio ${a.n}: <b>${a.racimos} R alzados</b>`:' · Nuevo acopio al registrar R'):' · Sin GPS')+` · Total: <b>${num((j.alces||[]).reduce((t,x)=>t+x.racimos,0))} R</b>`;}
@@ -2099,7 +2191,7 @@ function pintarPolBar(rUlt){
     const rp=f?((rUlt&&rUlt.palma_id===f.properties._id)?rUlt:S.hechos.get(f.properties._id)):null;nR=rp?rp.racimos||0:0;}
   {const i=$('#polBar [data-c="R"] .pol-n');if(i){i.textContent=nR||'';i.hidden=!nR;}
    const v=j.viaje||0,iD=$('#polD .pol-n');if(iD){iD.textContent=conD&&v?v:'';iD.hidden=!(conD&&v);}}
-  $('#polFin').hidden=!ab;
+  $('#polFin').hidden=true;pintarPics($('#polBar'));
   sincronizarBloqueo();actualizarBloqueo(rUlt);
 }
 function iniciarPolBar(){
@@ -2559,8 +2651,8 @@ async function procesarVoz(t){
     if(q.cmd==='deshacer'){while(POL_OCUPADO)await esperar(40);await deshacerPol();if(!VOZ.ultimoPol)VOZ.ultimoPol='No hay nada para deshacer.';}
     else if(q.cmd==='finalizar'){const ab=tramoAbierto();
       if(!ab)VOZ.ultimoPol='No hay un lote abierto.';
-      else{decir('Elija la transitabilidad de salida del lote '+paraVoz(ab.lote)+'.');await finalizarLoteActual();
-        VOZ.ultimoPol=ab.salida?`Lote ${paraVoz(ab.lote)} cerrado, ${ab.salida}.`:'El lote sigue abierto.';}}
+      else{await finalizarLoteActual();
+        VOZ.ultimoPol=ab.t_salida?`Lote ${paraVoz(ab.lote)} cerrado.`:'El lote sigue abierto.';}}
     else{fuera:for(const [c,n] of q.items){const veces=c==='D'?1:n;
       for(let k=0;k<veces;k++){VOZ.ultimoPol=null;VOZ.ultimoPolMal=false;await sumarEnCola(c,'voz');
         if(!VOZ.ultimoPol||VOZ.ultimoPolMal)break fuera;}}}   // un rechazo (o la transitabilidad cancelada) detiene el resto
@@ -3028,7 +3120,7 @@ function geoJornada(j,regs,pts,ahora,archivoFotos){
   for(const a of j.alces||[])feats.push({type:'Feature',geometry:{type:'Point',coordinates:[a.lng,a.lat]},
     properties:{tipo:'alce',jornada_id:j.id,labor:j.labor,evaluador:j.evaluador,n:a.n,racimos:a.racimos,t_ini:a.t_ini,t_fin:a.t_fin,hora:a.hora,lote:a.lote,precision_m:a.acc,fuente:a.fuente}});
   return {type:'FeatureCollection',name:'jornada_'+j.id,
-    jornada:{id:j.id,labor:laborInfo(j.labor)?laborInfo(j.labor).id:'corte',labor_nombre:(laborInfo(j.labor)||{}).n||'',viajes:(j.descargues||[]).length,racimos_descargados:(j.descargues||[]).reduce((t,d)=>t+d.racimos,0),racimos_viaje_abierto:j.viaje||0,acopios_alzados:(j.alces||[]).length,racimos_alzados:(j.alces||[]).reduce((t,a)=>t+a.racimos,0),evaluador:j.evaluador,usuario:j.usuario||'',dispositivo:j.dispositivo||S.cfg.dispositivo,fecha:fechaLocal(j.inicio),transito:Array.isArray(j.transito)?j.transito:[],
+    jornada:{id:j.id,zona:j.zona||'',labor:laborInfo(j.labor)?laborInfo(j.labor).id:'corte',labor_nombre:(laborInfo(j.labor)||{}).n||'',viajes:(j.descargues||[]).length,racimos_descargados:(j.descargues||[]).reduce((t,d)=>t+d.racimos,0),racimos_viaje_abierto:j.viaje||0,acopios_alzados:(j.alces||[]).length,racimos_alzados:(j.alces||[]).reduce((t,a)=>t+a.racimos,0),evaluador:j.evaluador,usuario:j.usuario||'',dispositivo:j.dispositivo||S.cfg.dispositivo,fecha:fechaLocal(j.inicio),transito:Array.isArray(j.transito)?j.transito:[],
       hora_inicio:hhmm(j.inicio),hora_fin:hhmm(j.fin),duracion_min:j.fin?Math.round((Date.parse(j.fin)-Date.parse(j.inicio))/60000):null,inicio:j.inicio,fin:j.fin,
       km:+(j.km||0).toFixed(3),...(j.visita||{}),...(j.resumen_paradas||{}),secuencias:j.secuencias||[],tiempos:j.tiempos||null,velocidad_kmh:j.tiempos?j.tiempos.velocidad_kmh:null,lotes_seleccionados:j.seleccion,diagnosticos:regs.length,puntos_recorrido:pts.length,fotos:regs.reduce((a,r)=>a+(r.fotos||[]).length,0),
       archivo_fotos:archivoFotos||null,desfase_hora_s:j.desfase_hora_s??null,prueba:j.prueba||null,nfc:j.nfc||null,desbloqueos_supervisor:j.desbloqueos||[],hora_validacion_inicio:j.hora||null,hora_validacion_fin:j.hora_fin||null,cartografia:j.carto_version||'',equipo:j.equipo||null,cortes_gps:j.cortes_gps||[],eventos_gps:j.eventos_gps||[],app:'Cosecha '+VERSION,sincronizado:ahora},

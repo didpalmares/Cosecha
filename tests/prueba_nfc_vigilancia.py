@@ -49,12 +49,10 @@ with sync_playwright() as p:
       S.gps={lat:1.7+m,lng:-78.7,acc:4,t:Date.now()};actualizarJornadaUI();
     }"""); time.sleep(.4)
     check('Al iniciar la jornada: reinicia el lector', pg.evaluate("__nfc.reinicios") > r0, pg.evaluate("__nfc.reinicios"))
-    # Primera tarjeta: pide transitabilidad; al cerrarla se reinicia el lector y la tarjeta suma
+    # Primera tarjeta: el lote se abre solo (sin preguntas), el lector no se reinicia y la tarjeta suma
     r1 = pg.evaluate("__nfc.reinicios")
-    pg.evaluate("__nfc.lis.tarjeta({texto:'R',id:'01'})")
-    pg.wait_for_selector('#hojaCuerpo [data-t="Transitable"]', timeout=5000)
-    pg.eval_on_selector('#hojaCuerpo [data-t="Transitable"]', 'b=>b.click()'); time.sleep(.6)
-    check('Tras elegir la transitabilidad: NO reinicia (evita apagar el lector justo al acercar la tarjeta)', pg.evaluate("__nfc.reinicios") == r1)
+    pg.evaluate("__nfc.lis.tarjeta({texto:'R',id:'01'})"); time.sleep(.8)
+    check('Al entrar al lote: NO reinicia el lector (evita apagarlo justo al acercar la tarjeta)', pg.evaluate("__nfc.reinicios") == r1)
     check('La tarjeta R sumó 1R', pg.evaluate("(S.hechos.get('P1')||{}).racimos") == 1)
     # Más de 60 s sin leer: la revisión periódica lo reinicia
     r2 = pg.evaluate("__nfc.reinicios")
