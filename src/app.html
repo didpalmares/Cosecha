@@ -36,6 +36,10 @@
 .ini-card b{font-size:20px;line-height:1.05;text-align:center}.ini-card small{font-size:14px;opacity:.8}
 .ini-card svg{width:86px;height:86px}
 .ini-card.on{border-color:var(--c,#ffb300);background:color-mix(in srgb,var(--c,#ffb300) 30%,transparent);box-shadow:0 0 0 3px var(--c,#ffb300)}
+.ini-pin{margin:10px 0 0;padding:12px;border-radius:16px;border:2px solid #ffc53d;background:rgba(255,197,61,.12);color:#ffe6a6;font-size:16px;line-height:1.35;text-align:center}
+.ini-pin[hidden]{display:none}.ini-pin b{color:#fff}
+.ini-pin input{width:150px;font:800 30px/1 Rajdhani,system-ui,sans-serif;letter-spacing:10px;text-align:center;padding:8px;border-radius:12px;border:2px solid #ffc53d;background:#10201a;color:#fff;margin:8px 6px 0}
+.ini-pin .fila{justify-content:center;align-items:center}
 .ini-card.on::after{content:'✔';position:absolute;top:6px;right:10px;font-size:26px;color:#fff;text-shadow:0 1px 4px #000}
 .ini-ir{margin-top:16px;min-height:72px;font-size:24px!important}
 .lote-aviso{position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:3000;padding:14px 26px;border-radius:20px;background:rgba(10,40,28,.94);border:3px solid #ffb300;color:#fff;text-align:center;font:800 34px/1.1 Rajdhani,system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.6);pointer-events:none}
@@ -177,9 +181,17 @@ button{cursor:pointer}
 #pjOcultar{position:absolute;bottom:4px;right:8px;width:32px;height:32px;border-radius:50%;border:1px solid var(--borde2);background:rgba(255,255,255,.07);color:var(--texto,#eaf5f0);display:grid;place-items:center;cursor:pointer;z-index:1}
 #pj .barra{margin-right:42px}
 #pj{padding-bottom:12px}
-#pjMini{align-self:flex-start;display:flex;align-items:center;gap:8px;border-radius:999px;padding:6px 8px 6px 12px;font-family:var(--t);font-weight:700;font-size:16px;letter-spacing:.5px;color:inherit;cursor:pointer}
+#pjMini{align-self:flex-start;display:flex;align-items:center;gap:6px;white-space:nowrap;max-width:100%;border-radius:999px;padding:6px 8px 6px 12px;font-family:var(--t);font-weight:700;font-size:16px;letter-spacing:.5px;color:inherit;cursor:pointer}
 #pjMini[hidden]{display:none}
 #pjMini small{font-size:11px;color:var(--tenue);letter-spacing:1px}
+.pj-rac{display:inline-flex;align-items:center;gap:4px;color:#ffc53d}.pj-rac b{font-size:22px;line-height:1}.pj-rac small{color:#ffc53d!important;font-size:10px!important}
+.pj-rac-ic svg{width:24px;height:24px;display:block}
+#pjMini.ruta .sin-ruta{display:none}
+.mk-desc{background:none;border:0;position:relative}
+.mk-desc-pin{position:relative;width:50px;height:50px;margin:0 auto;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#1565c0;border:3px solid #fff;box-shadow:0 3px 10px rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center}
+.mk-desc-pin svg{transform:rotate(45deg)}
+.mk-desc-pin b{position:absolute;top:-8px;right:-8px;transform:rotate(45deg);min-width:22px;height:22px;border-radius:11px;background:#ffc53d;color:#000;font:800 14px/22px Rajdhani,system-ui,sans-serif;text-align:center;border:2px solid #fff}
+.mk-desc-r{position:absolute;left:52px;top:12px;width:max-content;padding:0 6px;border-radius:8px;background:#1565c0;color:#fff;font:800 13px/18px Rajdhani,system-ui,sans-serif;border:1.5px solid #fff}
 #pjMini .sep{width:1px;height:16px;background:var(--borde)}
 #pjMini .ver{display:flex;align-items:center;gap:2px;margin-left:4px;padding:3px 6px 3px 9px;border-radius:999px;background:rgba(34,211,154,.16);color:var(--acento);font-size:12.5px;letter-spacing:1px}
 #pjMini.parado{border-color:var(--ambar);box-shadow:0 0 0 1px rgba(255,197,61,.55),0 0 18px rgba(255,197,61,.3)}
@@ -431,10 +443,10 @@ input[type=range]{flex:1;accent-color:var(--acento);height:28px}
 <div id="mapa"></div>
 
 <div id="superior">
-    <button id="pjMini" class="glass" hidden aria-label="Mostrar el panel de la jornada"><span class="rec"></span><span id="pjMiniT">00:00:00</span><span class="sep"></span><small>AVANCE</small><span id="pjMiniA">0 %</span><span class="sep"></span><small>HA</small><span id="pjMiniHa">0.00</span><span class="ver">VER<svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
+    <button id="pjMini" class="glass" hidden aria-label="Mostrar el panel de la jornada"><span class="rec"></span><span id="pjMiniT">00:00:00</span><span class="sep"></span><span class="pj-rac" aria-label="Racimos de la jornada"><span class="pj-rac-ic"></span><b class="pjRacN">0</b><small>RACIMOS</small></span><span class="sep sin-ruta"></span><small class="sin-ruta">AVANCE</small><span id="pjMiniA" class="sin-ruta">0 %</span><span class="sep sin-ruta"></span><small class="sin-ruta">HA</small><span id="pjMiniHa" class="sin-ruta">0.00</span><span class="ver">VER<svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
   <div id="pj" class="glass" hidden>
     <button id="pjOcultar" aria-label="Ocultar el panel de la jornada"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    <div class="pj-fila"><span class="rec"></span><span id="pjTiempo">00:00:00</span><span class="sep"></span><span><small>KM</small><span id="pjKm">0.00</span></span><span class="sep"></span><span><small>AVANCE</small><span id="pjCenso">0 / 0</span></span></div>
+    <div class="pj-fila"><span class="rec"></span><span id="pjTiempo">00:00:00</span><span class="sep"></span><span class="pj-rac"><span class="pj-rac-ic"></span><b class="pjRacN">0</b><small>RACIMOS</small></span><span class="sep"></span><span><small>KM</small><span id="pjKm">0.00</span></span><span class="sep"></span><span><small>AVANCE</small><span id="pjCenso">0 / 0</span></span></div>
     <div class="pj-fila pj2"><span><small>INICIO</small><span id="pjIni">--:--</span></span><span class="sep"></span><span><small>VISITADAS</small><span id="pjVis">0</span></span><span class="sep"></span><span><small>HA</small><span id="pjHa">0.00</span></span><span class="sep"></span><span><small>PARADAS</small><span id="pjPar">0</span></span></div>
     <div class="pj-fila pj2"><span><small>SECUENCIA</small><span id="pjSec">—</span></span><span class="sep"></span><span><small>LOTE</small><span id="pjSecLote">—</span></span><span class="sep"></span><span><small>T. EFECTIVO</small><span id="pjEfec">0:00</span></span><span class="sep"></span><span><small>VEL. KM/H</small><span id="pjVel">—</span></span></div>
     <div class="barra"><i id="pjBarra"></i></div>
@@ -967,7 +979,7 @@ const LABOR_APP='cosecha';   // familia de labores de la App (programación, sin
    Recolección y Corte y recolección además D (descargue del viaje en el acopio del sendero). Alce registra R (racimo alzado)
    en el punto del sendero donde está el acopio, sin palma. */
 const LABORES=[{id:'corte',n:'Corte de fruto',corto:'Corte',her:'Con palín mecánico',cods:['R']},
-  {id:'recoleccion',n:'Recolección con búfalo',corto:'Recolección',her:'Con búfalo',cods:['R','D']},
+  {id:'recoleccion',n:'Recolección con búfalo',corto:'Recolección',her:'Búfalo y zorrillo',cods:['R','D']},
   {id:'corte_recoleccion',n:'Corte y recolección',corto:'Corte y recolección',her:'Palín y búfalo',cods:['R','D']},
   {id:'alce',n:'Alce de fruto en sendero',corto:'Alce',her:'Con chuzo, en el sendero',cods:['R'],sendero:true}];
 const ID_LABORES=LABORES.map(x=>x.id);
@@ -984,12 +996,14 @@ const PIC_P={
   bufalo:'<ellipse cx="35" cy="38" rx="18" ry="11" fill="#455A64"/><rect x="21" y="44" width="4.5" height="13" rx="1" fill="#37474F"/><rect x="29" y="45" width="4.5" height="12" rx="1" fill="#37474F"/><rect x="39" y="45" width="4.5" height="12" rx="1" fill="#37474F"/><rect x="47" y="44" width="4.5" height="13" rx="1" fill="#37474F"/><ellipse cx="15" cy="34" rx="8.5" ry="7" fill="#546E7A"/><path d="M9 29 C2 27 3 19 10 21 M20 28 C24 22 28 23 26 29" fill="none" stroke="#ECEFF1" stroke-width="2.8" stroke-linecap="round"/><circle cx="12" cy="33" r="1.4" fill="#fff"/><path d="M53 35 Q59 40 57 47" fill="none" stroke="#455A64" stroke-width="2.2" stroke-linecap="round"/>',
   /* Chuzo: vara con punta de metal (herramienta del alcero) */
   chuzo:'<path d="M46 62 L46 15" stroke="#8D6E63" stroke-width="4" stroke-linecap="round"/><path d="M46 3 L52 16 L40 16 Z" fill="#CFD8DC" stroke="#455A64" stroke-width="1.5"/>'};
+/* Búfalo con el zorrillo (carreta) enganchado atrás, cargado de racimos: la Recolección. */
+PIC_P.zorrillo='<ellipse cx="33" cy="59" rx="30" ry="2.6" fill="#000" fill-opacity=".28"/><path d="M1 37h25l-2.5 12H3.5z" fill="#8D6E63" stroke="#4E342E" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.2 41h23M3 45h21.6" stroke="#5D4037" stroke-width="1"/><circle cx="7" cy="33.5" r="4.6" fill="#BF360C"/><circle cx="14" cy="31.5" r="5.4" fill="#E64A19"/><circle cx="21" cy="34" r="4.4" fill="#C62828"/><circle cx="10.5" cy="28.5" r="3.6" fill="#D84315"/><g fill="#3E2723" fill-opacity=".55"><circle cx="6" cy="32" r=".9"/><circle cx="8.4" cy="35" r=".9"/><circle cx="13" cy="30" r=".9"/><circle cx="15.6" cy="33" r=".9"/><circle cx="20" cy="32.6" r=".9"/><circle cx="22" cy="35.4" r=".9"/><circle cx="10" cy="27.6" r=".8"/></g><path d="M25 43 L37 41.5 L52 38" fill="none" stroke="#6D4C41" stroke-width="2.2" stroke-linecap="round"/><circle cx="13.5" cy="51.5" r="6.4" fill="#3E2723" stroke="#A1887F" stroke-width="1.8"/><path d="M13.5 46v11M8.2 51.5h10.6M9.8 47.8l7.4 7.4M17.2 47.8l-7.4 7.4" stroke="#A1887F" stroke-width="1"/><circle cx="13.5" cy="51.5" r="1.7" fill="#D7CCC8"/><path d="M31 35 Q28.5 40 30 47" fill="none" stroke="#263238" stroke-width="1.6" stroke-linecap="round"/><path d="M29.6 46.5l1.4 2.6l1-2.8z" fill="#263238"/><rect x="32.5" y="42" width="4.6" height="14" rx="1.6" fill="#263238"/><rect x="38.4" y="43" width="4.4" height="13" rx="1.6" fill="#37474F"/><rect x="48.6" y="43" width="4.4" height="13" rx="1.6" fill="#37474F"/><rect x="53.8" y="42" width="4.6" height="14" rx="1.6" fill="#263238"/><g fill="#111"><rect x="32.3" y="54.4" width="5" height="2.4" rx="1"/><rect x="38.2" y="54.4" width="4.8" height="2.4" rx="1"/><rect x="48.4" y="54.4" width="4.8" height="2.4" rx="1"/><rect x="53.6" y="54.4" width="5" height="2.4" rx="1"/></g><path d="M31 38 C31 30 38 27.5 45 28 C51 28.4 55 29.5 57.5 33 L59 42 C55 46.5 47 47.5 40 47 C34 46.6 31 44 31 38z" fill="#37474F"/><path d="M36 31 C42 29 49 29 54 31" fill="none" stroke="#546E7A" stroke-width="1.4" stroke-linecap="round"/><path d="M50 29.4 C50.4 35 50.6 41 50 46.4" fill="none" stroke="#FFB300" stroke-width="1.9" stroke-linecap="round"/><path d="M56 34 C58 33 61.5 34.5 62.5 38 L63.4 44.5 C63.6 47 61.6 48.4 59.6 47.6 C57 46.8 55.5 43 55.2 39.5z" fill="#455A64"/><ellipse cx="61.4" cy="46" rx="2.6" ry="2" fill="#263238"/><circle cx="62" cy="45.6" r=".55" fill="#90A4AE"/><path d="M58.6 34.6 C57.8 28.6 53 25 48.2 26.4 C46.6 26.9 46.4 28.6 47.8 29" fill="none" stroke="#3E2723" stroke-width="4.2" stroke-linecap="round"/><path d="M58.6 34.6 C57.8 28.6 53 25 48.2 26.4 C46.6 26.9 46.4 28.6 47.8 29" fill="none" stroke="#BCAAA4" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="56" cy="37.4" rx="2.4" ry="1.3" fill="#263238" transform="rotate(-25 56 37.4)"/><circle cx="60" cy="38.6" r="1.1" fill="#fff"/><circle cx="60.2" cy="38.7" r=".55" fill="#000"/>';
 const PIC_RAC=(t)=>`<g transform="${t}">${PIC_P.racimo}</g>`;
 const PIC_G=(k,t)=>`<g transform="${t}">${PIC_P[k]}</g>`;
 const PIC={racimo:PIC_P.racimo,
   corte:PIC_RAC('translate(2 2) scale(.58)')+PIC_P.palin,
-  recoleccion:PIC_G('bufalo','translate(-2 8) scale(.72)')+PIC_G('carreta','translate(30 18) scale(.52)')+PIC_RAC('translate(35 15) scale(.36)'),
-  corte_recoleccion:PIC_G('palin','translate(18 -2) scale(.72)')+PIC_G('bufalo','translate(-4 22) scale(.62)'),
+  recoleccion:PIC_P.zorrillo,
+  corte_recoleccion:PIC_G('palin','translate(22 -4) scale(.66)')+PIC_G('zorrillo','translate(0 22) scale(.66)'),
   alce:PIC_RAC('translate(14 2) scale(.72)')+PIC_P.chuzo+PIC_P.arriba,
   descargue:PIC_P.carreta.replace('<rect x="5" y="36"','<rect transform="rotate(-18 26 44)" x="5" y="36"')+PIC_RAC('translate(-2 30) scale(.45)')+PIC_P.abajo};
 const COLOR_LABOR={corte:'#2e7d32',recoleccion:'#1565c0',corte_recoleccion:'#7b1fa2',alce:'#ef6c00'};
@@ -1411,27 +1425,49 @@ function miniMapaZona(z){
 /* Pantalla de inicio de la jornada: 1) labor con su dibujo, 2) zona con su mapa, 3) INICIAR. Todo grande y con voz. */
 function abrirInicioCosecha(){
   if(!S.lotes){toast('La cartografía aún no está cargada.');return;}
-  const labs=misLabores(),zs=zonasCosecha();laborElegida();
+  S.pinDoble=false;const labs=laboresVisibles(),zs=zonasCosecha();laborElegida();
+  S.labSet=labs.length===1?[labs[0]]:[];S.laborSel=S.labSet[0]||'';   // con varias labores no viene ninguna marcada: el operario toca la suya
   if(!zs.includes(S.zonaSel))S.zonaSel=zs.includes(S.cfg.ultimaZona)?S.cfg.ultimaZona:(zs.length===1?zs[0]:'');
   abrirHoja('Iniciar jornada',`
     <div class="ini-paso"><span class="ini-n">1</span>👷 ¿QUÉ LABOR HACE HOY?</div>
     <div class="ini-grid" id="iniLab">${labs.map(id=>{const l=laborInfo(id);return `<button type="button" class="ini-card" data-lab="${id}" style="--c:${COLOR_LABOR[id]}" aria-label="${esc(l.n)}">${svgPic(id,86)}<b>${esc(l.corto.toUpperCase())}</b><small>${esc(l.her||l.n)}</small></button>`;}).join('')}</div>
+    <div class="ini-pin" id="iniPin" hidden>⚠️ <b>Se recomienda elegir UNA sola labor.</b><br>Para hacer <b>CORTE y RECOLECCIÓN</b> juntas, pida el PIN al supervisor.
+      <div class="fila"><input id="iniPinTx" type="password" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="PIN del supervisor"><button type="button" class="btn prim grande" id="iniPinOk">PERMITIR</button></div>
+      <div id="iniPinMsj" style="margin-top:6px;font-weight:700"></div></div>
     <div class="ini-paso"><span class="ini-n">2</span>🗺️ ¿EN QUÉ ZONA?</div>
     <div class="ini-grid" id="iniZona">${zs.length?zs.map(z=>`<button type="button" class="ini-card" data-zona="${esc(z)}" style="--c:${colorZona(z)}" aria-label="${esc(nombreZona(z))}">${miniMapaZona(z)}<b>${esc(nombreZona(z))}</b><small>${num(lotesZona(z).length)} lotes</small></button>`).join(''):'<p class="tenue">La cartografía no tiene zonas de cosecha: se trabaja en toda la plantación.</p>'}</div>
     <button class="btn nar ancho grande ini-ir" id="iniOk">${IC.play} INICIAR JORNADA</button>
     <p class="tenue" style="text-align:center">El lote se elige solo: cuando usted entra a un lote, sus palmas se activan.</p>`,{media:true});
-  const pintar=()=>{document.querySelectorAll('#iniLab [data-lab]').forEach(b=>b.classList.toggle('on',b.dataset.lab===S.laborSel));
+  const pintar=()=>{const doble=S.labSet.length===2;S.laborSel=doble?(S.pinDoble?'corte_recoleccion':''):(S.labSet[0]||'');
+    document.querySelectorAll('#iniLab [data-lab]').forEach(b=>b.classList.toggle('on',S.labSet.includes(b.dataset.lab)));
+    $('#iniPin').hidden=!doble;if(doble&&S.pinDoble){$('#iniPinMsj').textContent='✅ Permitido: CORTE Y RECOLECCIÓN';$('#iniPinMsj').style.color='#7dffa8';}
     document.querySelectorAll('#iniZona [data-zona]').forEach(b=>b.classList.toggle('on',b.dataset.zona===S.zonaSel));
     const ok=!!S.laborSel&&(!zs.length||!!S.zonaSel);$('#iniOk').disabled=!ok;$('#iniOk').style.opacity=ok?1:.45;};
-  document.querySelectorAll('#iniLab [data-lab]').forEach(b=>b.onclick=()=>{S.laborSel=b.dataset.lab;pintar();if(HAY_VOZ())hablar(laborInfo(S.laborSel).n,true);});
+  document.querySelectorAll('#iniLab [data-lab]').forEach(b=>b.onclick=()=>{const id=b.dataset.lab,par=PAR_DOBLE.includes(id);
+    if(S.labSet.includes(id))S.labSet=labs.length===1?[id]:S.labSet.filter(x=>x!==id);       // tocarla otra vez la desmarca
+    else if(par&&permiteDoble()&&S.labSet.length===1&&PAR_DOBLE.includes(S.labSet[0])&&S.labSet[0]!==id)S.labSet=PAR_DOBLE.slice();
+    else S.labSet=[id];
+    S.pinDoble=false;$('#iniPinTx').value='';$('#iniPinMsj').textContent='';pintar();
+    if(HAY_VOZ()&&S.labSet.length)hablar(S.labSet.length===2?'Corte y recolección. Se recomienda elegir una sola labor. Para hacer las dos, pida el PIN al supervisor.':laborInfo(S.labSet[0]).n,true);});
+  const probarPin=()=>{const tx=$('#iniPinTx'),m=$('#iniPinMsj');
+    if(tx.value.trim()===PIN_DOBLE){S.pinDoble=true;pintar();if(HAY_VOZ())hablar('Permitido. Corte y recolección.',true);}
+    else{S.pinDoble=false;tx.value='';m.textContent='❌ PIN incorrecto. Elija una sola labor.';m.style.color='#ff8a80';if(navigator.vibrate)navigator.vibrate([200,100,200]);if(HAY_VOZ())hablar('PIN incorrecto. Elija una sola labor.',true);pintar();}};
+  $('#iniPinOk').onclick=probarPin;$('#iniPinTx').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();probarPin();}};
   document.querySelectorAll('#iniZona [data-zona]').forEach(b=>b.onclick=()=>{S.zonaSel=b.dataset.zona;pintar();if(HAY_VOZ())hablar(vozZona(S.zonaSel),true);
     const fs=S.lotes.features.filter(f=>String(f.properties.ZonaCosecha||'')===S.zonaSel);const k=cajaDe(fs);if(k)mapa.fitBounds(k,{padding:[30,30]});});
-  $('#iniOk').onclick=async()=>{if($('#iniOk').disabled){if(HAY_VOZ())hablar(!S.laborSel?'Toque su labor':'Toque su zona',true);return;}
+  $('#iniOk').onclick=async()=>{if($('#iniOk').disabled){if(HAY_VOZ())hablar(S.labSet.length===2&&!S.pinDoble?'Pida el PIN al supervisor o elija una sola labor':!S.laborSel?'Toque su labor':'Toque su zona',true);return;}
     if(!SES){alert('Inicie sesión para iniciar una jornada.');return;}
     S.cfg.ultimaZona=S.zonaSel;cerrarHoja();await iniciarJornada([],SES.nombre);};
   pintar();if(HAY_VOZ())hablar('Toque su labor y su zona. Luego toque iniciar.',true);
 }
-function laborElegida(){const l=misLabores();if(!l.includes(S.laborSel))S.laborSel=l.includes(S.cfg.ultimaLabor)?S.cfg.ultimaLabor:l[0];return S.laborSel;}
+/* Tarjetas de labor: «Corte y recolección» no tiene tarjeta propia; se elige marcando CORTE y RECOLECCIÓN juntas, y eso
+   solo se permite con el PIN del supervisor (PIN_DOBLE). Lo recomendado es una sola labor. */
+const PIN_DOBLE='9999',PAR_DOBLE=['corte','recoleccion'];
+function laboresVisibles(){const l=misLabores(),v=new Set(l.filter(x=>x!=='corte_recoleccion'));
+  if(l.includes('corte_recoleccion'))PAR_DOBLE.forEach(x=>v.add(x));return ID_LABORES.filter(x=>v.has(x));}
+const permiteDoble=()=>PAR_DOBLE.every(x=>laboresVisibles().includes(x));
+function laborElegida(){const v=laboresVisibles(),ok=x=>v.includes(x)||(x==='corte_recoleccion'&&permiteDoble()&&S.pinDoble);
+  if(!ok(S.laborSel))S.laborSel=v.includes(S.cfg.ultimaLabor)?S.cfg.ultimaLabor:v[0];return S.laborSel;}
 function idJornada(){const d=new Date();return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}-${uid().slice(0,6)}`;}
 async function iniciarJornada(sel,evaluador){try{revisarHora();}catch(e){}
   {const m=motivoNoIniciar();if(m){avisarFueraPlantacion(m);return;}}
@@ -1469,8 +1505,15 @@ function actualizarCenso(){
   let tot=0,hec=0;for(const it of S.jornada.seleccion){tot+=totalLote(it.lote);hec+=visitadasLote(it.lote);}
   $('#pjCenso').textContent=`${num(hec)} / ${num(tot)} · ${pctTxt(hec,tot)} %`;$('#pjMiniA').textContent=`${pctTxt(hec,tot)} %`;$('#pjBarra').style.width=(tot?Math.min(100,hec/tot*100):0)+'%';
 }
+/* Racimos de la jornada: en Corte/Recolección, la suma de R de las palmas; en Alce, la de los acopios alzados. */
+function racimosJornada(j=S.jornada){if(!j)return 0;
+  if(esLaborRuta(j))return (j.alces||[]).reduce((t,x)=>t+(Number(x.racimos)||0),0);
+  let t=0;for(const r of S.hechos.values())t+=Number(r.racimos)||0;return t;}   // S.hechos: último registro de cada palma de la jornada
+function pintarRacimosJ(){const n=num(racimosJornada());document.querySelectorAll('.pjRacN').forEach(e=>{if(e.textContent!==n)e.textContent=n;});
+  document.querySelectorAll('.pj-rac-ic').forEach(e=>{if(!e.firstChild)e.innerHTML=`<svg viewBox="0 0 64 64" aria-hidden="true">${PIC_P.racimo||''}</svg>`;});}
 function actualizarJornadaUI(){try{dibujarEventosCosecha();}catch(e){}
-  const a=!!S.jornada,ver=a&&!esLaborRuta(S.jornada);$('#pj').hidden=!(ver&&S.pjAbierto);$('#pjMini').hidden=!(ver&&!S.pjAbierto);
+  const a=!!S.jornada,ruta=a&&esLaborRuta(S.jornada),ver=a;$('#pj').hidden=!(ver&&!ruta&&S.pjAbierto);$('#pjMini').hidden=!(ver&&(ruta||!S.pjAbierto));
+  $('#pjMini').classList.toggle('ruta',ruta);try{pintarRacimosJ();}catch(e){}
   $('#btJornada').classList.toggle('activa',a);
   $('#btJornadaIc').innerHTML=a?IC.ruta:IC.play;$('#btJornadaTxt').textContent=a?'Jornada':'Iniciar';
   if(a&&!esLaborRuta(S.jornada)){actualizarCenso();relojJornada();actualizarVisitaUI();actualizarParadas();try{actualizarSecUI();}catch(e){}}else $('#pj').classList.remove('parado');actualizarCab();
@@ -1481,7 +1524,7 @@ $('#btJornada').onclick=()=>{if(PLAY.on)return;if(S.jornada)panelJornada();else{
 $('#pj').onclick=()=>panelJornada();
 /* Panel de la jornada plegable: inicia oculto (solo la píldora con tiempo y avance) para no ocupar el mapa. */
 S.pjAbierto=false;
-$('#pjMini').onclick=()=>{S.pjAbierto=true;actualizarJornadaUI();};
+$('#pjMini').onclick=()=>{if(S.jornada&&esLaborRuta(S.jornada)){panelJornada();return;}S.pjAbierto=true;actualizarJornadaUI();};
 $('#pjOcultar').onclick=e=>{e.stopPropagation();S.pjAbierto=false;actualizarJornadaUI();};
 function panelJornada(){
   const j=S.jornada;if(!j)return;
@@ -2127,9 +2170,15 @@ function distSeg(lat,lng,a,b){const kx=111320*Math.cos(lat*Math.PI/180),ky=11054
   const u=L?Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/L)):0;return Math.hypot(px-ax-u*dx,py-ay-u*dy);}
 /* Puntos de descargue (azul) y de alce (naranja) de la jornada en el mapa. */
 let capaEventosCosecha=null;
+/* Marcador del descargue (Recolección): pin azul con el dibujo del descargue, el número del viaje y los racimos. Queda fijo
+   en el punto GPS donde se descargó, durante toda la jornada (y en el visor). */
+function iconoDescargue(d){
+  return L.divIcon({className:'mk-desc',iconSize:[54,64],iconAnchor:[27,62],popupAnchor:[0,-56],
+    html:`<div class="mk-desc-r">${d.racimos} R</div><div class="mk-desc-pin"><svg viewBox="0 0 64 64" width="36" height="36" aria-hidden="true">${PIC.descargue||''}</svg><b>${d.n}</b></div>`});}
 function dibujarEventosCosecha(){try{
   if(!capaEventosCosecha)capaEventosCosecha=L.layerGroup().addTo(mapa);capaEventosCosecha.clearLayers();const j=S.jornada;if(!j)return;
-  for(const d of j.descargues||[])L.circleMarker([d.lat,d.lng],{radius:9,color:'#fff',weight:2,fillColor:'#1e88e5',fillOpacity:1}).bindTooltip(`Descargue ${d.n} · ${d.racimos} R · ${d.hora||''}`).addTo(capaEventosCosecha);
+  for(const d of j.descargues||[])L.marker([d.lat,d.lng],{icon:iconoDescargue(d),zIndexOffset:5000,keyboard:false})
+    .bindPopup(`<b>Descargue ${d.n}</b><br>${d.racimos} racimos · ${esc(d.hora||'')}${d.lote?'<br>Lote '+esc(d.lote):''}`).addTo(capaEventosCosecha);
   for(const a of j.alces||[])L.circleMarker([a.lat,a.lng],{radius:9,color:'#fff',weight:2,fillColor:'#ff6d00',fillOpacity:1}).bindTooltip(`Acopio ${a.n} · ${a.racimos} R alzados`).addTo(capaEventosCosecha);
 }catch(e){}}
 async function deshacerPol(){
@@ -2177,6 +2226,7 @@ function pintarPolBar(rUlt){
   const on=!!S.jornada&&esLaborCosecha(S.jornada.labor);bar.hidden=!on;document.body.classList.toggle('con-polbar',on);
   if(!S.jornada)MODO.libre=false;aplicarModoJornada();
   if(!on){sincronizarBloqueo();return;}
+  try{pintarRacimosJ();}catch(e){}
   const ab=tramoAbierto(),lab=laborInfo(S.jornada.labor),j=S.jornada,conD=lab.cods.includes('D');
   $('#polD').hidden=!conD;$('#polBts').classList.toggle('sin-d',!conD);
   const cab=`<span class="pol-lab" style="background:${COLOR_LABOR[lab.id]};color:#fff">${svgPic(lab.id,26)} ${esc(lab.corto)}</span>`+(ab?`<b style="font-size:18px">📍 ${esc(ab.lote)}</b>`:'<b>📍 Camine a su lote</b>')+(j.zona?` <span class="tenue">${esc(nombreZona(j.zona))}</span>`:'');
@@ -2244,7 +2294,23 @@ function iniciarBloqueo(){
 const MODO={libre:false,aplicado:null};
 const NAT_B=()=>{try{return window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.Botones||null;}catch(e){return null;}};
 function modoJornadaActivo(){return !!S.jornada&&esLaborCosecha(S.jornada.labor)&&!MODO.libre;}
+/* Guardia de pantalla: mientras haya jornada (aunque el supervisor la haya liberado) la app se muestra encima del bloqueo
+   y, si el operario apaga la pantalla con el botón de encendido, la app la vuelve a encender: el NFC sigue leyendo. */
+const GUARDIA={on:null,escucha:false};
+async function aplicarGuardia(){
+  const on=!!S.jornada&&esLaborCosecha(S.jornada.labor);
+  const B=NAT_B();if(!B||typeof B.guardia!=='function'||GUARDIA.on===on)return;GUARDIA.on=on;
+  if(!GUARDIA.escucha&&B.addListener){GUARDIA.escucha=true;try{B.addListener('pantallaReencendida',anotarReencendido);}catch(e){}}
+  try{await B.guardia({on});}catch(e){GUARDIA.on=null;}
+}
+function anotarReencendido(r){
+  const j=S.jornada;if(!j)return;
+  (j.pantalla_reencendida||(j.pantalla_reencendida=[])).push({fecha:new Date(ahoraReal()).toISOString(),ok:!!(r&&r.ok)});
+  try{dbPut('jornadas',j);}catch(_){}
+  if(r&&r.ok===false)toast('⚠ La pantalla no se pudo volver a encender sola. Revise el permiso «Encender la pantalla» de la app.',8000);
+}
 async function aplicarModoJornada(forzar){
+  aplicarGuardia();
   const on=modoJornadaActivo();document.body.classList.toggle('modo-jornada',on);
   const bm=$('#btModoJ');if(bm)bm.hidden=!(S.jornada&&MODO.libre);
   if(!forzar&&MODO.aplicado===on)return;MODO.aplicado=on;
@@ -2733,14 +2799,14 @@ function panelGrabarNfc(){
   if(!esAdminSES()){toast('Solo administradores, analistas de datos y super administradores pueden grabar tarjetas.');return;}
   const cods=[{c:'R',n:'Racimo'},{c:'D',n:'Descargue del viaje (Recolección)'}];
   abrirHoja('Grabar tarjetas NFC',`
-    <p class="tenue">Elija el código, toque <b>GRABAR</b> y acerque la tarjeta a la parte trasera del celular. Sirve para tarjetas nuevas o para cambiar el código de una tarjeta.</p>
+    <p class="tenue">Elija el código, toque <b>GRABAR</b> y acerque la tarjeta a la parte trasera del celular. Sirve para tarjetas nuevas o para cambiar el código de una tarjeta. Si una tarjeta viene grabada de otro uso y no se deja cambiar, tóquela primero con <b>BORRAR TARJETA</b>.</p>
     <div class="pol-bts" id="grbCods">${cods.map(x=>`<button type="button" data-g="${x.c}" class="c${x.c}" aria-label="${x.c}: ${esc(x.n)}"><b>${x.c}</b><small>${esc(x.n)}</small></button>`).join('')}</div>
     <div id="grbMsg" class="aviso" style="margin-top:12px">Elija un código.</div>
-    <div class="fila" style="margin-top:12px"><button type="button" class="btn prim grande" id="grbOk">GRABAR</button><button type="button" class="btn" id="grbVer">Verificar tarjeta</button></div>
+    <div class="fila" style="margin-top:12px"><button type="button" class="btn prim grande" id="grbOk">GRABAR</button><button type="button" class="btn" id="grbVer">Verificar tarjeta</button><button type="button" class="btn" id="grbBorrar" style="border-color:#ff8a80;color:#ffb4ab">🧽 BORRAR TARJETA</button></div>
     <button type="button" class="btn ancho" id="grbCancel" style="margin-top:8px" hidden>Cancelar</button>`,{alCerrar:cancelarGrabacionNfc});
   const msg=(h,cl)=>{const m=$('#grbMsg');if(m){m.innerHTML=h;m.className=cl==='ok'?'candado':'aviso';}};
   const pintar=()=>{document.querySelectorAll('#grbCods [data-g]').forEach(b=>b.style.outline=b.dataset.g===NFC_GRAB.c?'3px solid #fff':'none');
-    $('#grbCancel').hidden=!NFC_GRAB.activo;$('#grbOk').disabled=NFC_GRAB.activo;$('#grbVer').disabled=NFC_GRAB.activo;};
+    $('#grbCancel').hidden=!NFC_GRAB.activo;$('#grbOk').disabled=NFC_GRAB.activo;$('#grbVer').disabled=NFC_GRAB.activo;$('#grbBorrar').disabled=NFC_GRAB.activo;};
   document.querySelectorAll('#grbCods [data-g]').forEach(b=>b.onclick=()=>{if(NFC_GRAB.activo)return;NFC_GRAB.c=b.dataset.g;pintar();
     msg(`Código <b>${NFC_GRAB.c}</b>: ${esc(nombreCod(NFC_GRAB.c))}. Toque GRABAR.`);});
   $('#grbCancel').onclick=()=>{cancelarGrabacionNfc();pintar();msg('Grabación cancelada.');};
@@ -2748,6 +2814,12 @@ function panelGrabarNfc(){
     msg('📶 Acerque la tarjeta para verificarla (no se registra nada)…');
     NFC.verificar=ev=>{const c=codigoNfc(ev.texto)||(ev.id&&uidsNfc()[ev.id])||null;
       msg(c?`✅ Esta tarjeta es <b>${c}</b>: ${esc(nombreCod(c))}${ev.id?` · número ${esc(ev.id)}`:''}.`:`⚠️ Tarjeta sin código de cosecha${ev.texto?` (contiene «${esc(String(ev.texto).slice(0,20))}»)`:' (en blanco)'}.`,c?'ok':'');};};
+  $('#grbBorrar').onclick=async()=>{NFC_GRAB.activo=true;pintar();msg('📶 Acerque la tarjeta que quiere <b>BORRAR</b>… (déjela quieta 1 segundo). Queda en blanco, lista para grabar R o D.');
+    try{const r=await borrarTarjeta();if(r&&r.id){const m=uidsNfc();if(m[r.id]){delete m[r.id];try{localStorage.setItem('cos_nfc_uid',JSON.stringify(m));}catch(e){}}}
+      try{navigator.vibrate&&navigator.vibrate(150);}catch(e){}if(HAY_VOZ())hablar('Tarjeta borrada',true);
+      msg(`✅ Tarjeta borrada${r&&r.id?` · número ${esc(r.id)}`:''}. Ya está en blanco: elija R o D y toque GRABAR.`,'ok');}
+    catch(e){if(NFC_GRAB.activo)msg('⚠️ '+esc(String(e&&e.message||e))+' Intente de nuevo sin mover la tarjeta.');}
+    finally{NFC_GRAB.activo=false;pintar();}};
   $('#grbOk').onclick=async()=>{const c=NFC_GRAB.c;if(!c){msg('Primero elija el código (R o D).');return;}
     NFC_GRAB.activo=true;pintar();msg(`📶 Acerque ahora la tarjeta para grabar <b>${c}</b> · ${esc(nombreCod(c))}… (déjela quieta 1 segundo)`);
     try{const r=await grabarTarjeta(NFC_PREFIJO+c);if(r&&r.id)aprenderUid(r.id,c);
@@ -2765,6 +2837,17 @@ async function grabarTarjeta(c){
     catch(e1){if(e1&&e1.name==='AbortError')throw new Error('Cancelada.');await new NDEFReader().write({records:recs},{overwrite:true,signal:NFC_GRAB.ctrl.signal});}
     return {ok:true};}
   throw new Error('Este celular o navegador no puede grabar tarjetas NFC. Use la APK de Cosecha en un celular Android con NFC.');}
+/* Borra la tarjeta: la deja con un mensaje NDEF vacío (sirve para etiquetas grabadas con otros datos). */
+async function borrarTarjeta(){
+  if(nfcNativoDisponible()){const N=NAT_N();if(typeof N.grabar!=='function')throw new Error('Actualice la APK para borrar tarjetas desde la app.');
+    if(NFC.estado!=='listo')await iniciarNfc(false);
+    try{return await N.grabar({texto:'',borrar:true});}
+    catch(e){if(/Falta el c/.test(String(e&&e.message||e)))throw new Error('Actualice la APK para borrar tarjetas desde la app.');throw e;}}
+  if('NDEFReader' in window){NFC_GRAB.ctrl=new AbortController();
+    try{await new NDEFReader().write({records:[{recordType:'empty'}]},{overwrite:true,signal:NFC_GRAB.ctrl.signal});}
+    catch(e){if(e&&e.name==='AbortError')throw new Error('Cancelada.');throw new Error(e&&e.name==='NetworkError'?'La tarjeta no se pudo escribir (puede estar bloqueada para siempre).':String(e&&e.message||e));}
+    return {ok:true};}
+  throw new Error('Este celular o navegador no puede borrar tarjetas NFC. Use la APK de Cosecha en un celular Android con NFC.');}
 function cancelarGrabacionNfc(){if(!NFC_GRAB.activo&&!NFC.verificar)return;NFC_GRAB.activo=false;NFC.verificar=null;
   try{if(nfcNativoDisponible()&&typeof NAT_N().cancelarGrabacion==='function')NAT_N().cancelarGrabacion();}catch(e){}
   try{NFC_GRAB.ctrl&&NFC_GRAB.ctrl.abort();}catch(e){}}
@@ -3123,7 +3206,7 @@ function geoJornada(j,regs,pts,ahora,archivoFotos){
     jornada:{id:j.id,zona:j.zona||'',labor:laborInfo(j.labor)?laborInfo(j.labor).id:'corte',labor_nombre:(laborInfo(j.labor)||{}).n||'',viajes:(j.descargues||[]).length,racimos_descargados:(j.descargues||[]).reduce((t,d)=>t+d.racimos,0),racimos_viaje_abierto:j.viaje||0,acopios_alzados:(j.alces||[]).length,racimos_alzados:(j.alces||[]).reduce((t,a)=>t+a.racimos,0),evaluador:j.evaluador,usuario:j.usuario||'',dispositivo:j.dispositivo||S.cfg.dispositivo,fecha:fechaLocal(j.inicio),transito:Array.isArray(j.transito)?j.transito:[],
       hora_inicio:hhmm(j.inicio),hora_fin:hhmm(j.fin),duracion_min:j.fin?Math.round((Date.parse(j.fin)-Date.parse(j.inicio))/60000):null,inicio:j.inicio,fin:j.fin,
       km:+(j.km||0).toFixed(3),...(j.visita||{}),...(j.resumen_paradas||{}),secuencias:j.secuencias||[],tiempos:j.tiempos||null,velocidad_kmh:j.tiempos?j.tiempos.velocidad_kmh:null,lotes_seleccionados:j.seleccion,diagnosticos:regs.length,puntos_recorrido:pts.length,fotos:regs.reduce((a,r)=>a+(r.fotos||[]).length,0),
-      archivo_fotos:archivoFotos||null,desfase_hora_s:j.desfase_hora_s??null,prueba:j.prueba||null,nfc:j.nfc||null,desbloqueos_supervisor:j.desbloqueos||[],hora_validacion_inicio:j.hora||null,hora_validacion_fin:j.hora_fin||null,cartografia:j.carto_version||'',equipo:j.equipo||null,cortes_gps:j.cortes_gps||[],eventos_gps:j.eventos_gps||[],app:'Cosecha '+VERSION,sincronizado:ahora},
+      archivo_fotos:archivoFotos||null,desfase_hora_s:j.desfase_hora_s??null,prueba:j.prueba||null,nfc:j.nfc||null,desbloqueos_supervisor:j.desbloqueos||[],pantalla_reencendida:j.pantalla_reencendida||[],hora_validacion_inicio:j.hora||null,hora_validacion_fin:j.hora_fin||null,cartografia:j.carto_version||'',equipo:j.equipo||null,cortes_gps:j.cortes_gps||[],eventos_gps:j.eventos_gps||[],app:'Cosecha '+VERSION,sincronizado:ahora},
     features:feats};
 }
 async function sincronizar(manual){

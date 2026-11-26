@@ -217,8 +217,9 @@ table.usuarios td{font-size:13.5px}
         <li>Pulse <b>GRABAR</b> y, cuando lo indique, acerque la tarjeta a la parte trasera del celular (cerca de la cámara) y manténgala quieta hasta el aviso.</li>
         <li>Marque la tarjeta con su letra (R o D) y su color, para que el operario la reconozca.</li>
         <li>Si la tarjeta ya tenía un código, se reemplaza. Use <b>Leer tarjeta</b> para comprobarla.</li>
+        <li>Si la etiqueta viene grabada de otro uso y no se deja cambiar, pulse <b>BORRAR TARJETA</b>, acérquela (queda en blanco) y luego grábela. Si aun así no se puede, está bloqueada para siempre: descártela.</li>
       </ol>
-      <div class="fila"><button class="btn nar" id="nfcGrabar" disabled>GRABAR</button><button class="btn" id="nfcLeer" disabled>Leer tarjeta</button><button class="btn" id="nfcCancelar" hidden>Cancelar</button></div>
+      <div class="fila"><button class="btn nar" id="nfcGrabar" disabled>GRABAR</button><button class="btn" id="nfcLeer" disabled>Leer tarjeta</button><button class="btn" id="nfcBorrar" disabled>🧽 BORRAR TARJETA</button><button class="btn" id="nfcCancelar" hidden>Cancelar</button></div>
       <div class="nfc-msg" id="nfcMsg"></div>
     </div>
   </section>
@@ -344,7 +345,7 @@ const NFC_COD=[{c:'R',n:'Racimo',col:'#2e7d32'},{c:'D',n:'Descargue del viaje (R
 const NFCW={cod:null,ctrl:null,hay:'NDEFReader' in window};
 function nfcMsg(t,cls){const m=$('#nfcMsg');m.className='nfc-msg'+(cls?' '+cls:'');m.innerHTML=t;}
 function nfcPintar(){$('#nfcCods').innerHTML=NFC_COD.map(x=>`<button type="button" data-c="${x.c}" class="${NFCW.cod===x.c?'on':''}" style="--c:${x.col}"><b>${x.c}</b><span>${esc(x.n)}</span></button>`).join('');
-  $('#nfcGrabar').disabled=!NFCW.hay||!NFCW.cod||!!NFCW.ctrl;$('#nfcLeer').disabled=!NFCW.hay||!!NFCW.ctrl;$('#nfcCancelar').hidden=!NFCW.ctrl;
+  $('#nfcGrabar').disabled=!NFCW.hay||!NFCW.cod||!!NFCW.ctrl;$('#nfcLeer').disabled=!NFCW.hay||!!NFCW.ctrl;$('#nfcBorrar').disabled=!NFCW.hay||!!NFCW.ctrl;$('#nfcCancelar').hidden=!NFCW.ctrl;
   $('#nfcGrabar').textContent=NFCW.cod?'GRABAR «'+NFCW.cod+'»':'GRABAR';}
 $('#nfcNo').hidden=NFCW.hay;
 $('#nfcCods').onclick=e=>{const b=e.target.closest('[data-c]');if(!b||NFCW.ctrl)return;NFCW.cod=b.dataset.c;nfcPintar();nfcMsg('');};
@@ -372,6 +373,14 @@ $('#nfcLeer').onclick=async()=>{if(!NFCW.hay)return;const ctrl=new AbortControll
     r.onreadingerror=()=>nfcMsg('⚠️ No se pudo leer la tarjeta. Acérquela de nuevo.','mal');
     await r.scan({signal:ctrl.signal});}
   catch(e){if(e.name!=='AbortError')nfcMsg('⚠️ '+nfcError(e),'mal');nfcTerminar();}};
+$('#nfcBorrar').onclick=async()=>{if(!NFCW.hay)return;const ctrl=new AbortController();NFCW.ctrl=ctrl;nfcPintar();
+  const tm=setTimeout(()=>{if(NFCW.ctrl===ctrl){nfcTerminar();nfcMsg('Se agotó el tiempo (30 s). Pulse BORRAR de nuevo.','mal');}},30000);
+  nfcMsg('📶 Acerque la tarjeta que quiere <b>borrar</b> a la parte trasera del celular…');
+  try{await new NDEFReader().write({records:[{recordType:'empty'}]},{overwrite:true,signal:ctrl.signal});
+    if(NFCW.ctrl!==ctrl)return;try{navigator.vibrate&&navigator.vibrate(150);}catch(e){}
+    nfcMsg('✅ Tarjeta borrada: quedó en blanco. Elija R o D y pulse GRABAR.','bien');}
+  catch(e){if(NFCW.ctrl===ctrl&&e.name!=='AbortError')nfcMsg('⚠️ '+(e&&e.name==='NetworkError'?'La tarjeta no se pudo escribir: puede estar bloqueada para siempre. Descártela.':nfcError(e)),'mal');}
+  finally{clearTimeout(tm);if(NFCW.ctrl===ctrl){NFCW.ctrl=null;nfcPintar();}}};
 $('#nfcCancelar').onclick=()=>{nfcTerminar();nfcMsg('Cancelado.');};
 nfcPintar();
 

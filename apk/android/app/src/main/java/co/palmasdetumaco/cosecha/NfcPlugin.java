@@ -105,7 +105,9 @@ public class NfcPlugin extends Plugin implements NfcAdapter.ReaderCallback {
     @PluginMethod
     public void grabar(PluginCall call) {
         String texto = call.getString("texto", "");
-        if (texto == null || texto.trim().isEmpty()) { call.reject("Falta el código a grabar."); return; }
+        boolean borrar = Boolean.TRUE.equals(call.getBoolean("borrar", false));   // borrar: deja la tarjeta en blanco (NDEF vacío)
+        if (borrar) texto = "";
+        else if (texto == null || texto.trim().isEmpty()) { call.reject("Falta el código a grabar."); return; }
         if (adaptador() == null) { call.reject("Este celular no tiene NFC."); return; }
         if (grabarCall != null) { try { grabarCall.reject("Reemplazada por otra grabación."); } catch (Exception ignored) { } }
         grabarTexto = texto.trim();
@@ -125,16 +127,19 @@ public class NfcPlugin extends Plugin implements NfcAdapter.ReaderCallback {
         PluginCall g = grabarCall; String texto = grabarTexto;
         grabarCall = null; grabarTexto = null;
         if (g == null) return;
+        final boolean borrar = texto.isEmpty();
         try {
-            NdefMessage msg = new NdefMessage(new NdefRecord[]{
+            NdefMessage msg = borrar
+                    ? new NdefMessage(new NdefRecord[]{new NdefRecord(NdefRecord.TNF_EMPTY, null, null, null)})
+                    : new NdefMessage(new NdefRecord[]{
                     NdefRecord.createTextRecord("es", texto),
                     NdefRecord.createApplicationRecord(getContext().getPackageName())});
             Ndef ndef = Ndef.get(tag);
             if (ndef != null) {
                 try {
                     ndef.connect();
-                    if (!ndef.isWritable()) throw new Exception("La tarjeta está bloqueada contra escritura.");
-                    if (ndef.getMaxSize() < msg.toByteArray().length) msg = new NdefMessage(new NdefRecord[]{NdefRecord.createTextRecord("es", texto)});
+                    if (!ndef.isWritable()) throw new Exception("La tarjeta está bloqueada para siempre contra escritura: no se puede borrar ni grabar. Descártela.");
+                    if (!borrar && ndef.getMaxSize() < msg.toByteArray().length) msg = new NdefMessage(new NdefRecord[]{NdefRecord.createTextRecord("es", texto)});
                     ndef.writeNdefMessage(msg);
                 } finally { try { ndef.close(); } catch (Exception ignored) { } }
             } else {
@@ -143,7 +148,7 @@ public class NfcPlugin extends Plugin implements NfcAdapter.ReaderCallback {
                 try { f.connect(); f.format(msg); } finally { try { f.close(); } catch (Exception ignored) { } }
             }
             vibrar(new long[]{0, 150});
-            JSObject r = new JSObject(); r.put("ok", true); r.put("id", hex(tag.getId())); r.put("texto", texto);
+            JSObject r = new JSObject(); r.put("ok", true); r.put("id", hex(tag.getId())); r.put("texto", texto); r.put("borrada", borrar);
             g.resolve(r);
         } catch (Exception e) {
             vibrar(new long[]{0, 60, 80, 60, 80, 60});

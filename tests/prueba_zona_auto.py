@@ -54,7 +54,7 @@ with sync_playwright() as p:
         print('cubre:', pg.evaluate("(()=>{const b=document.querySelector('#iniLab [data-lab=recoleccion]').getBoundingClientRect();const e=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return e?(e.id||e.className||e.tagName):null})()"))
     labs = pg.eval_on_selector_all('#iniLab [data-lab]', 'bs=>bs.map(b=>[b.dataset.lab,b.textContent.trim(),!!b.querySelector("svg")])')
     check('Inicio: una tarjeta con dibujo y nombre por cada labor del usuario', [x[0] for x in labs] == ['corte', 'recoleccion'] and all(x[2] for x in labs)
-          and 'CORTE' in labs[0][1] and 'palín' in labs[0][1] and 'RECOLECCIÓN' in labs[1][1] and 'búfalo' in labs[1][1], labs)
+          and 'CORTE' in labs[0][1] and 'palín' in labs[0][1] and 'RECOLECCIÓN' in labs[1][1] and 'búfalo' in labs[1][1].lower(), labs)
     zonas = pg.eval_on_selector_all('#iniZona [data-zona]', 'bs=>bs.map(b=>[b.dataset.zona,b.textContent.trim(),!!b.querySelector("svg polygon")])')
     check('Inicio: zonas Z1 y Z2 con su mapa y número de lotes', [z[0] for z in zonas] == ['Z1', 'Z2'] and all(z[2] for z in zonas)
           and 'ZONA 1' in zonas[0][1] and '2 lotes' in zonas[0][1], zonas)
