@@ -217,6 +217,28 @@ La App está pensada para personal que no lee: todo tiene dibujo, color y voz.
 - **DATOS → Jornadas y recorridos**: cada jornada con su duración, kilómetros, puntos y diagnósticos. El botón **▶ Reproducir recorrido** muestra el track animado con hora, distancia y diagnósticos que aparecen en el momento en que se registraron. Tiene velocidades de ×10 a ×300 y una barra para adelantar o retroceder.
 - **DATOS → Resumen por lote**: palmas, registradas y racimos (R) por lote (último registro de cada palma), y los viajes, R descargados, acopios y R alzados de la jornada actual.
 
+### Trazabilidad: ficha del acopio, copia al supervisor y tablero
+
+Todo funciona **sin señal**. Cada celular registra lo suyo y los eslabones se unen al sincronizar.
+
+- **Conteo doble**: en «Corte y recolección» (con el PIN del supervisor) cada R cuenta 1 racimo de corte y 1 de recolección. La jornada, la exportación (`racimos_corte`, `racimos_recoleccion`, `racimos_por_lote`) y el tablero los muestran por separado.
+- **Ficha NFC del acopio** (APK 1.0.5 o superior):
+  1. **Recolector**: al confirmar el descargue (D dos veces), la app pide «Acerque la ficha». La ficha queda grabada con el acopio, el lote, los racimos, el recolector y la hora. Él la deja sobre el montón.
+  2. Si por error acerca su tarjeta R o D, **no se graba encima**: la app avisa «Esa es la tarjeta R». Con «SIN FICHA», o pasados 90 s sin ficha, el acopio queda solo con su punto GPS.
+  3. **Alcero**: toca la ficha y la app anuncia los racimos del acopio. Cada R que marque cuenta contra la ficha («3 de 23»… «completo»). Si alza más racimos de los que dice la ficha, la app avisa.
+  4. La ficha no se borra: el recolector la vuelve a usar y la app la sobrescribe en el siguiente viaje.
+  - Fichas: tokens o llaveros NFC **NTAG213** resistentes al agua (no MIFARE Classic), unas 10 por recolector. No hay que grabarlas antes.
+- **Copia al supervisor por QR**:
+  1. **Operario**: en «Jornada en curso», «Jornada finalizada» o el Menú (Compartir mi jornada), toca **COMPARTIR CON EL SUPERVISOR** y muestra el QR. Si la jornada es larga salen varios QR que cambian solos: hay que mantener la pantalla quieta.
+  2. **Supervisor o administrador**: en el Menú, «Recibir jornadas», apunta la cámara al QR de cada operario.
+  3. La copia es **informativa**: no se edita y no se suma con la data oficial, que sube del celular de cada operario. El celular del supervisor guarda las copias 10 días.
+- **Tablero del supervisor** (Menú, «Tablero del supervisor»):
+  - Racimos de corte, de recolección y alzados del día.
+  - Resumen por operario.
+  - **Cuadre por lote**: cortados → recolectados → alzados, con las diferencias.
+  - Alertas: **acopios sin alzar** y viajes sin descargar. Los acopios sin alzar se pueden ver en el mapa. Para saber si un acopio se alzó, la app empata primero por la ficha; si no hay ficha, por cercanía de 30 m y hora.
+- **Visor**: la pestaña de lotes agrega Cortados, Recolectados, Sin recolectar y Sin alzar.
+
 ### Registro con la pantalla bloqueada (APK)
 - **Registro protegido (APK 1.0.8 en adelante):** el GPS lo graba un servicio propio de la APK (notificación «Jornada en curso», CPU activa) que **guarda cada punto en el celular**. Si Android duerme o cierra la App con la pantalla bloqueada, al volver la App **recupera todos los puntos** con su hora real: el recorrido queda completo, sin líneas rectas.
 - **Vigilancia cada minuto:** una alarma del sistema (funciona aun con el celular en reposo) revisa el registro cada 60 s:

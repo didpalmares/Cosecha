@@ -45,6 +45,8 @@ public class NfcPlugin extends Plugin implements NfcAdapter.ReaderCallback {
     // Grabación pendiente: la próxima tarjeta que se acerque se graba con este código (texto + marca de la app)
     private volatile PluginCall grabarCall = null;
     private volatile String grabarTexto = null;
+    // proteger: no grabar encima de una tarjeta R o D (ficha del acopio: si el recolector acerca su tarjeta R por error, no se daña)
+    private volatile boolean grabarProteger = false;
 
     /* ---- Vigilancia del lector (validado en campo: en algunos celulares, p. ej. Ulefone Armor X16 con Android 16, el modo lector
      * deja de entregar tarjetas tras 1 o 2 horas sin avisar; apagar y encender la pantalla lo revivía). Se rearma el lector:
@@ -195,9 +197,16 @@ public class NfcPlugin extends Plugin implements NfcAdapter.ReaderCallback {
         if (adaptador() == null) { call.reject("Este celular no tiene NFC."); return; }
         if (grabarCall != null) { try { grabarCall.reject("Reemplazada por otra grabación."); } catch (Exception ignored) { } }
         grabarTexto = texto.trim();
+        grabarProteger = Boolean.TRUE.equals(call.getBoolean("proteger", false));
         grabarCall = call;
         activo = true;
         encender();
+    }
+
+    /** Funciones de esta versión de la APK (la app web decide qué ofrecer). */
+    @PluginMethod
+    public void capacidades(PluginCall call) {
+        JSObject r = new JSObject(); r.put("fichaAcopio", true); r.put("proteger", true); call.resolve(r);
     }
 
     @PluginMethod
@@ -208,8 +217,8 @@ public class NfcPlugin extends Plugin implements NfcAdapter.ReaderCallback {
     }
 
     private void escribir(Tag tag) {
-        PluginCall g = grabarCall; String texto = grabarTexto;
-        grabarCall = null; grabarTexto = null;
+        PluginCall g = grabarCall; String texto = grabarTexto; final boolean proteger = grabarProteger;
+        grabarCall = null; grabarTexto = null; grabarProteger = false;
         if (g == null) return;
         final boolean borrar = texto.isEmpty();
         try {
@@ -222,6 +231,12 @@ public class NfcPlugin extends Plugin implements NfcAdapter.ReaderCallback {
             if (ndef != null) {
                 try {
                     ndef.connect();
+                    if (proteger) {
+                        String actual = "";
+                        try { actual = leer(ndef.getCachedNdefMessage()); } catch (Exception ignored) { }
+                        java.util.regex.Matcher mc = java.util.regex.Pattern.compile("^(?:COS:(?://)?)?\\s*([RD])\\s*$", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(actual.trim());
+                        if (mc.matches()) throw new Exception("ES_CODIGO:" + mc.group(1).toUpperCase());
+                    }
                     if (!ndef.isWritable()) throw new Exception("La tarjeta está bloqueada para siempre contra escritura: no se puede borrar ni grabar. Descártela.");
                     if (!borrar && ndef.getMaxSize() < msg.toByteArray().length) msg = new NdefMessage(new NdefRecord[]{NdefRecord.createTextRecord("es", texto)});
                     ndef.writeNdefMessage(msg);

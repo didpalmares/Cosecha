@@ -45,6 +45,12 @@ html = html.replace('__LOGO__', 'data:image/png;base64,' + b64(os.path.join(MARC
 html = html.replace('__APPLOGO__', 'data:image/svg+xml;base64,' + b64(os.path.join(MARCA, 'sv_icono.svg')))
 html = html.replace('__ISO__', 'data:image/png;base64,' + b64(os.path.join(MARCA, 'isotipo_256.png')))
 html = html.replace('/*HOJA_VIDA_APP_JS*/', leer(os.path.join(RAIZ, 'src', 'hoja_vida_app.js')), 1)
+# Trazabilidad (Fase 1): ficha NFC del acopio, copia al supervisor por QR y tablero; QR: qrcode-generator (crear) y jsQR (leer)
+for k, v in {'/*TRAZABILIDAD_JS*/': leer(os.path.join(RAIZ, 'src', 'trazabilidad.js')),
+             '/*LIB_QRCODE*/': seguro(leer(f'{NM}/qrcode-generator/qrcode.js')),
+             '/*LIB_JSQR*/': seguro(leer(f'{NM}/jsqr/dist/jsQR.js'))}.items():
+    assert k in html, k
+    html = html.replace(k, v, 1)
 with open(os.path.join(RAIZ, 'index.html'), 'w', encoding='utf-8') as f:
     f.write(html)
 

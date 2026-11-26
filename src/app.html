@@ -534,6 +534,8 @@ input[type=range]{flex:1;accent-color:var(--acento);height:28px}
 
 <script>/*LIB_LEAFLET*/</script>
 <script>/*LIB_JSZIP*/</script>
+<script>/*LIB_QRCODE*/</script>
+<script>/*LIB_JSQR*/</script>
 <script>
 'use strict';
 /* =====================================================================
@@ -1532,7 +1534,9 @@ function panelJornada(){
     return `<div class="prog-lote"><b>${esc(it.lote)}</b><div class="barra" style="margin:0"><i style="width:${p}%"></i></div><span class="tenue">${pctTxt(c.hec,c.tot)} % · ${num(c.hec)}/${num(c.tot)} palmas · L${it.desde??'?'}–${it.hasta??'?'}</span></div>`;}).join('');
   const regs=S.registros.filter(r=>r.jornada_id===j.id);actualizarParadas();const res=paradasEnLotes(resumenVisita(VIS||nuevoEstadoVisita(j.densidad,j.buffer,j.metodoVisita,j.bufferTerraza),regs),PAR.lista);
   abrirHoja('Jornada en curso',`
-    <div class="stats">
+    ${htmlRacimosLabor(j)}
+    <button class="btn prim ancho btn-comp" id="jComp">📤 COMPARTIR CON EL SUPERVISOR</button>
+    <div class="stats" style="margin-top:10px">
       <div class="stat"><b>${hhmm(j.inicio)}</b><span>Hora de inicio</span></div>
       <div class="stat"><b>${fmtDur(Date.now()-Date.parse(j.inicio)).slice(0,5)}</b><span>Duración</span></div>
       <div class="stat"><b>${(j.km||0).toFixed(2)}</b><span>Km recorridos</span></div>
@@ -1548,7 +1552,7 @@ function panelJornada(){
     <button class="btn ancho" id="jAgregar">${IC.mas} Agregar lotes</button>
     <button class="btn ancho" id="jVer">${IC.play} Ver recorrido hasta ahora</button>
     <button class="btn peligro ancho mantener" id="jFin" style="margin-top:14px;flex-direction:column">${IC.stop} FINALIZAR JORNADA<small class="subMant">Mantenga presionado 2 segundos</small></button>`);
-  $('#jAgregar').onclick=()=>abrirPlanificador('agregar');
+  $('#jAgregar').onclick=()=>abrirPlanificador('agregar');$('#jComp').onclick=()=>compartirJornada(j);
   $('#jVer').onclick=()=>abrirPlay(j.id);
   botonMantener($('#jFin'),finalizarJornada);
 }
@@ -1573,7 +1577,9 @@ async function finalizarJornada(){
   {const fin=msjFin();hablar(fin,true);}avisoJornada(false);
   const res=j.visita;
   abrirHoja('Jornada finalizada',`
-    <div class="stats">
+    ${htmlRacimosLabor(j)}
+    <button class="btn prim ancho btn-comp" id="fComp">📤 COMPARTIR CON EL SUPERVISOR</button>
+    <div class="stats" style="margin-top:10px">
       <div class="stat"><b>${hhmm(j.inicio)}</b><span>Hora de inicio</span></div>
       <div class="stat"><b>${hhmm(j.fin)}</b><span>Hora de fin</span></div>
       <div class="stat"><b>${fmtDur(Date.parse(j.fin)-Date.parse(j.inicio)).slice(0,5)}</b><span>Duración</span></div>
@@ -1590,7 +1596,7 @@ async function finalizarJornada(){
     <p class="tenue">Censadas ${num(c.hec)} de ${num(c.tot)} palmas seleccionadas. La jornada completa se sincronizará con GitHub en cuanto haya WiFi; después quedará bloqueada.</p>
     <button class="btn prim ancho" id="fPlay">${IC.play} Ver el recorrido del día</button>
     <button class="btn ancho" id="fSync">${IC.sync} Sincronizar ahora</button>`);
-  $('#fPlay').onclick=()=>abrirPlay(j.id);
+  $('#fPlay').onclick=()=>abrirPlay(j.id);$('#fComp').onclick=()=>compartirJornada(j);
   $('#fSync').onclick=()=>sincronizar(true);
   programarSync(1000);
 }
@@ -2146,20 +2152,22 @@ async function registrarDescargue(fuente){
   const g=S.gps,ab=tramoAbierto(),t=ahoraReal();
   const d={id:uid(),n:(j.descargues||[]).length+1,racimos:n,t:new Date(t).toISOString(),hora:hhmm(t),lat:+g.lat.toFixed(7),lng:+g.lng.toFixed(7),acc:Math.round(g.acc*10)/10,
     lote:ab?ab.lote:(loteDe(g.lat,g.lng)||''),fuente:fuente||'boton'};
+  d.aco=idAcopio(d);
   (j.descargues=j.descargues||[]).push(d);j.viaje=0;j.sync='pendiente';await dbPut('jornadas',j);await marcarJornadaPendiente(j.id);
   DESHACER.push({tipo:'D',id:d.id});if(DESHACER.length>30)DESHACER.shift();
-  avisoPol(`Viaje ${d.n} descargado: ${vozRacimos(n)}.`);pintarPolBar();dibujarEventosCosecha();}
+  avisoPol(`Viaje ${d.n} descargado: ${vozRacimos(n)}.`);pintarPolBar();dibujarEventosCosecha();
+  setTimeout(()=>{ofrecerFicha(d).catch(e=>console.warn(e));},300);}   // ficha NFC del acopio (trazabilidad.js)
 async function registrarAlce(fuente){
   const j=S.jornada,g=S.gps,ab=tramoAbierto(),t=ahoraReal(),ti=new Date(t).toISOString();
   const lote=ab?ab.lote:(loteDe(g.lat,g.lng)||loteCercano(g.lat,g.lng));
   if(lote&&!await asegurarEntradaLote(lote))return;
-  const A=(j.alces=j.alces||[]);let a=A[A.length-1];
+  const A=(j.alces=j.alces||[]);let a=fichaParaAlce(A,g,lote,t,ti,fuente);   // acopio con ficha NFC (trazabilidad.js)
   /* Un acopio = racimos alzados en el mismo sitio (20 m o menos) y sin pausa larga (15 min) */
-  if(!a||a.lote!==(lote||'')||dist(a.lat,a.lng,g.lat,g.lng)>20||t-Date.parse(a.t_fin)>15*60000){
+  if(a);else if(a=A[A.length-1],!a||a.lote!==(lote||'')||dist(a.lat,a.lng,g.lat,g.lng)>20||t-Date.parse(a.t_fin)>15*60000){
     a={id:uid(),n:A.length+1,racimos:0,lat:+g.lat.toFixed(7),lng:+g.lng.toFixed(7),acc:Math.round(g.acc*10)/10,lote:lote||'',t_ini:ti,t_fin:ti,hora:hhmm(t),fuente:fuente||'boton'};A.push(a);}
   a.racimos++;a.t_fin=ti;j.sync='pendiente';await dbPut('jornadas',j);await marcarJornadaPendiente(j.id);
   DESHACER.push({tipo:'A',id:a.id});if(DESHACER.length>30)DESHACER.shift();
-  avisoPol(`Acopio ${a.n}: ${a.racimos===1?'un racimo alzado':paraVoz(a.racimos)+' racimos alzados'}.`);pintarPolBar();dibujarEventosCosecha();}
+  avisoPol(avisoAlce(a));pintarPolBar();dibujarEventosCosecha();}
 /* Lote más cercano a un punto (el alce va por senderos, a veces fuera del polígono): hasta 60 m. */
 function loteCercano(lat,lng){let mejor='',dm=60;
   for(const f of (S.lotes?S.lotes.features:[])){const polys=f.geometry.type==='Polygon'?[f.geometry.coordinates]:f.geometry.coordinates;
@@ -2740,7 +2748,7 @@ function nfcNativoDisponible(){try{return !!(NATIVO&&window.Capacitor&&typeof Ca
 const NFC_PREFIJO='';
 function codigoNfc(t){const m=String(t??'').trim().toUpperCase().match(/^(?:COS:(?:\/\/)?)?\s*([RD])\s*$/);return m?m[1]:null;}
 /* Lectura de una tarjeta (la llaman el plugin nativo y Web NFC). Devuelve 'ok', 'repetida' o 'desconocida'. */
-function nfcLeido(ev){ev=ev||{};if(ev.t!=null)NFC.recibidas=(NFC.recibidas||0)+1;if(NFC.verificar&&typeof NFC.verificar==='function'){const f=NFC.verificar;NFC.verificar=null;f(ev);return 'verificada';}NFC.ultLect=Date.now();const ahora=Date.now(),texto=String(ev.texto??''),clave=ev.id?'id:'+ev.id:'tx:'+texto;
+function nfcLeido(ev){ev=ev||{};if(ev.t!=null)NFC.recibidas=(NFC.recibidas||0)+1;if(typeof FICHA!=='undefined'&&FICHA.activa&&NFC.modo==='web')return 'ficha';if(NFC.verificar&&typeof NFC.verificar==='function'){const f=NFC.verificar;NFC.verificar=null;f(ev);return 'verificada';}NFC.ultLect=Date.now();const ahora=Date.now(),texto=String(ev.texto??''),clave=ev.id?'id:'+ev.id:'tx:'+texto;
   const st=statsNfc();st.lecturas++;
   const u=NFC.ult;
   if(u&&u.clave===clave&&!u.retirada&&ahora-u.t<NFC_REPOSO){st.repetidas++;return 'repetida';} // rebote de la misma pasada
@@ -2753,8 +2761,9 @@ function nfcLeido(ev){ev=ev||{};if(ev.t!=null)NFC.recibidas=(NFC.recibidas||0)+1
     st.fallidas++;NFC.ult=null;avisoPol('No se leyó bien la tarjeta. Acérquela de nuevo y déjela quieta un segundo.',true);return 'fallida';}
   return nfcCodigo(texto,st,ev);}
 function nfcCodigo(texto,st,ev){
+  {const fa=parseFicha(texto);if(fa){st.ok++;st.fichas=(st.fichas||0)+1;pintarNfc();NFC.cola=NFC.cola.then(()=>leerFichaAcopio(fa,ev)).catch(e=>console.warn(e));return 'ficha';}}
   const c=codigoNfc(texto);
-  if(!c){st.desconocidas++;avisoPol(`Tarjeta no reconocida (${texto.slice(0,20)}). Use tarjetas R o D.`,true);return 'desconocida';}
+  if(!c){st.desconocidas++;avisoPol(`Tarjeta no reconocida (${texto.slice(0,20)}). Use tarjetas R, D o la ficha del acopio.`,true);return 'desconocida';}
   if(ev&&ev.id)aprenderUid(ev.id,c);
   st.ok++;pintarNfc();NFC.cola=NFC.cola.then(()=>sumarEnCola(c,'nfc')).catch(e=>console.warn(e));return 'ok';}
 /* Tarjetas aprendidas en este celular: número único (UID) → código. Se aprende con cada lectura completa; si una tarjeta se regraba,
@@ -3220,11 +3229,14 @@ function geoJornada(j,regs,pts,ahora,archivoFotos){
     properties:{tipo:'parada',n:p.n,inicio:new Date(p.inicio).toISOString(),fin:new Date(p.fin).toISOString(),hora_inicio:hhmm(p.inicio),hora_fin:hhmm(p.fin),
       duracion_min:p.duracion_min,lote:p.lote,clase:p.tipo,diagnosticos:p.diagnosticos,sin_senal_min:p.sin_senal_min,puntos:p.puntos}});
   for(const d of j.descargues||[])feats.push({type:'Feature',geometry:{type:'Point',coordinates:[d.lng,d.lat]},
-    properties:{tipo:'descargue',jornada_id:j.id,labor:j.labor,evaluador:j.evaluador,n:d.n,racimos:d.racimos,t:d.t,hora:d.hora,lote:d.lote,precision_m:d.acc,fuente:d.fuente}});
+    properties:{tipo:'descargue',jornada_id:j.id,labor:j.labor,evaluador:j.evaluador,n:d.n,racimos:d.racimos,t:d.t,hora:d.hora,lote:d.lote,precision_m:d.acc,fuente:d.fuente,
+      acopio_id:d.aco||'',ficha:!!d.ficha,ficha_uid:d.ficha?d.ficha.uid||'':'',ficha_t:d.ficha?d.ficha.t||'':''}});
   for(const a of j.alces||[])feats.push({type:'Feature',geometry:{type:'Point',coordinates:[a.lng,a.lat]},
-    properties:{tipo:'alce',jornada_id:j.id,labor:j.labor,evaluador:j.evaluador,n:a.n,racimos:a.racimos,t_ini:a.t_ini,t_fin:a.t_fin,hora:a.hora,lote:a.lote,precision_m:a.acc,fuente:a.fuente}});
+    properties:{tipo:'alce',jornada_id:j.id,labor:j.labor,evaluador:j.evaluador,n:a.n,racimos:a.racimos,t_ini:a.t_ini,t_fin:a.t_fin,hora:a.hora,lote:a.lote,precision_m:a.acc,fuente:a.fuente,
+      ...(a.ficha?{acopio_id:a.ficha.id,ficha:true,ficha_racimos:a.ficha.racimos,ficha_recolector:a.ficha.usuario,ficha_lote:a.ficha.lote,ficha_hora:a.ficha.hora,ficha_uid:a.ficha.uid||''}:{ficha:false})}});
   return {type:'FeatureCollection',name:'jornada_'+j.id,
-    jornada:{id:j.id,zona:j.zona||'',labor:laborInfo(j.labor)?laborInfo(j.labor).id:'corte',labor_nombre:(laborInfo(j.labor)||{}).n||'',viajes:(j.descargues||[]).length,racimos_descargados:(j.descargues||[]).reduce((t,d)=>t+d.racimos,0),racimos_viaje_abierto:j.viaje||0,acopios_alzados:(j.alces||[]).length,racimos_alzados:(j.alces||[]).reduce((t,a)=>t+a.racimos,0),evaluador:j.evaluador,usuario:j.usuario||'',dispositivo:j.dispositivo||S.cfg.dispositivo,fecha:fechaLocal(j.inicio),transito:Array.isArray(j.transito)?j.transito:[],
+    jornada:{id:j.id,zona:j.zona||'',labor:laborInfo(j.labor)?laborInfo(j.labor).id:'corte',labor_nombre:(laborInfo(j.labor)||{}).n||'',viajes:(j.descargues||[]).length,racimos_descargados:(j.descargues||[]).reduce((t,d)=>t+d.racimos,0),racimos_viaje_abierto:j.viaje||0,acopios_alzados:(j.alces||[]).length,racimos_alzados:(j.alces||[]).reduce((t,a)=>t+a.racimos,0),
+      ...(()=>{const r=racimosDeJornada(j,regs);return {racimos_corte:r.corte,racimos_recoleccion:r.recoleccion,racimos_por_lote:r.lotes,acopios_con_ficha:(j.descargues||[]).filter(d=>d.ficha).length+(j.alces||[]).filter(a=>a.ficha).length};})(),evaluador:j.evaluador,usuario:j.usuario||'',dispositivo:j.dispositivo||S.cfg.dispositivo,fecha:fechaLocal(j.inicio),transito:Array.isArray(j.transito)?j.transito:[],
       hora_inicio:hhmm(j.inicio),hora_fin:hhmm(j.fin),duracion_min:j.fin?Math.round((Date.parse(j.fin)-Date.parse(j.inicio))/60000):null,inicio:j.inicio,fin:j.fin,
       km:+(j.km||0).toFixed(3),...(j.visita||{}),...(j.resumen_paradas||{}),secuencias:j.secuencias||[],tiempos:j.tiempos||null,velocidad_kmh:j.tiempos?j.tiempos.velocidad_kmh:null,lotes_seleccionados:j.seleccion,diagnosticos:regs.length,puntos_recorrido:pts.length,fotos:regs.reduce((a,r)=>a+(r.fotos||[]).length,0),
       archivo_fotos:archivoFotos||null,desfase_hora_s:j.desfase_hora_s??null,prueba:j.prueba||null,nfc:j.nfc||null,desbloqueos_supervisor:j.desbloqueos||[],pantalla_reencendida:j.pantalla_reencendida||[],hora_validacion_inicio:j.hora||null,hora_validacion_fin:j.hora_fin||null,cartografia:j.carto_version||'',equipo:j.equipo||null,cortes_gps:j.cortes_gps||[],eventos_gps:j.eventos_gps||[],app:'Cosecha '+VERSION,sincronizado:ahora},
@@ -3404,8 +3416,9 @@ async function importarJornadaGeo(g,zip){
   const sp=s=>Array.isArray(s)?s:(s?String(s).split('|').filter(Boolean):[]);const sinJpg=f=>String(f).replace(/\.jpg$/i,'');
   const regs=[],pts=[],paradas=[],descargues=[],alces=[];
   for(const ft of g.features||[]){const p=ft.properties||{},c=ft.geometry&&ft.geometry.coordinates;if(!c)continue;
-    if(p.tipo==='descargue'){descargues.push({id:p.id||uid(),n:p.n,racimos:Number(p.racimos)||0,t:p.t,hora:p.hora,lat:c[1],lng:c[0],acc:p.precision_m,lote:p.lote||'',fuente:p.fuente||''});continue;}
-    if(p.tipo==='alce'){alces.push({id:p.id||uid(),n:p.n,racimos:Number(p.racimos)||0,t_ini:p.t_ini,t_fin:p.t_fin,hora:p.hora,lat:c[1],lng:c[0],acc:p.precision_m,lote:p.lote||'',fuente:p.fuente||''});continue;}
+    if(p.tipo==='descargue'){descargues.push({id:p.id||uid(),n:p.n,racimos:Number(p.racimos)||0,t:p.t,hora:p.hora,lat:c[1],lng:c[0],acc:p.precision_m,lote:p.lote||'',fuente:p.fuente||'',aco:p.acopio_id||'',...(p.ficha?{ficha:{uid:p.ficha_uid||'',t:p.ficha_t||''}}:{})});continue;}
+    if(p.tipo==='alce'){alces.push({id:p.id||uid(),n:p.n,racimos:Number(p.racimos)||0,t_ini:p.t_ini,t_fin:p.t_fin,hora:p.hora,lat:c[1],lng:c[0],acc:p.precision_m,lote:p.lote||'',fuente:p.fuente||'',
+      ...(p.ficha&&p.acopio_id?{ficha:{id:p.acopio_id,racimos:p.ficha_racimos,usuario:p.ficha_recolector,lote:p.ficha_lote,hora:p.ficha_hora,uid:p.ficha_uid||''},esperados:Number(p.ficha_racimos)||0}:{})});continue;}
     if(p.tipo==='recorrido'){const cs=ft.geometry.type==='LineString'?c:[c];const t0=Date.parse(h.inicio)||0;
       cs.forEach((q,i)=>pts.push({j:id,t:Date.parse((p.tiempos||[])[i])||t0+i*1000,lat:q[1],lng:q[0],acc:(p.precision_m||[])[i]??null,s:1}));}
     else if(p.tipo==='parada')paradas.push({n:p.n,inicio:Date.parse(p.inicio),fin:Date.parse(p.fin),duracion_min:p.duracion_min,lote:p.lote,tipo:p.clase,diagnosticos:p.diagnosticos,sin_senal_min:p.sin_senal_min,puntos:p.puntos,lat:c[1],lng:c[0]});
@@ -3819,6 +3832,9 @@ function menu(){
       ${mos('mSync','sync','Sincronizar','Enviar a GitHub')}
       ${mos('mExp','descarga','Exportar','Respaldo local')}
       ${mos('mHist','nube','Recuperar mi historial','Bajar mis jornadas sincronizadas')}
+      ${mos('mComp','nube','Compartir mi jornada','QR para el supervisor')}
+      ${puedeAuditar()?mos('mRecib','descarga','Recibir jornadas','Escanear el QR de los operarios'):''}
+      ${puedeAuditar()?mos('mTab','grafico','Tablero del supervisor','Racimos de corte y recolección'):''}
       ${puedeAuditar()?mos('mDia','grafico','Panel del día','Reporte, jornadas y alertas'):''}
       ${puedeAuditar()?mos('mAud','bd','Auditoría',AUD.m?`${AUD.m.palmas.length} palmas · ${esc(AUD.m.id)}`:'Muestra para verificar'):''}
       ${mos('mZona','mapa','Mapa sin conexión','Guardar la zona visible')}
@@ -3842,6 +3858,7 @@ function menu(){
   on('#mNfcG',()=>{cerrarHoja();setTimeout(panelGrabarNfc,250);});
   on('#mSync',panelSync);on('#mSalir',cerrarSesion);on('#mExp',menuExportar);on('#mHist',panelHistorial);on('#mZona',()=>{cerrarHoja();setTimeout(guardarZona,300);});on('#mCfg',abrirConfig);on('#mBg',()=>{cerrarHoja();setTimeout(()=>revisarSegundoPlano(true),300);});
   on('#mVisor',()=>{cerrarHoja();window.open('visor.html','_blank');});
+  on('#mComp',()=>compartirJornada());on('#mRecib',recibirCopias);on('#mTab',()=>abrirTablero());
   on('#mInst',()=>{cerrarHoja();instalarApp();});
 }
 async function abrirConfig(){
@@ -4051,6 +4068,7 @@ function avisarFueraPlantacion(m){
 }
 /*NUCLEO_JS*/
 /*HOJA_VIDA_APP_JS*/
+/*TRAZABILIDAD_JS*/
 /* =====================================================================
    ARRANQUE
    ===================================================================== */

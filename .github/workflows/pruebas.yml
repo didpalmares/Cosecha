@@ -34,7 +34,7 @@ jobs:
 
       - name: Dependencias
         run: |
-          npm install --no-save --prefix "$RUNNER_TEMP/deps" leaflet@1.9.4 jszip@3.10.1 @fontsource/rajdhani
+          npm install --no-save --prefix "$RUNNER_TEMP/deps" leaflet@1.9.4 jszip@3.10.1 @fontsource/rajdhani qrcode-generator@1.4.4 jsqr@1.4.0
           pip install --quiet playwright pillow openpyxl
           python -m playwright install --with-deps chromium
 

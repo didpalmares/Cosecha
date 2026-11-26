@@ -112,6 +112,8 @@ with sync_playwright() as p:
     esperar("RV.hablando")
     check('Micrófono en pausa mientras la app habla', pg.evaluate("!window.__srOn") and not pg.evaluate("window.__hablar('racimo')"))
     listo()
+    check('Tras el descargue se pide la ficha del acopio', pg.evaluate("FICHA.activa||!!document.querySelector('#fichaNo')"))
+    pg.evaluate("cerrarHoja()"); time.sleep(0.3)   # «SIN FICHA»
     pg.click('#btDxVoz'); time.sleep(0.3)
     check('Desactivar registro por voz', not pg.evaluate("PV.on") and not pg.evaluate("RV.on"))
 
@@ -144,7 +146,7 @@ with sync_playwright() as p:
     r7 = pg.evaluate("nfcLeido({texto:'pol:A',id:'04CE'})"); time.sleep(0.3)
     r8 = pg.evaluate("nfcLeido({texto:'cos:C',id:'04CF'})"); time.sleep(0.3)
     check('Tarjetas de Polinización («V», «pol:A») y de la versión anterior («cos:C») rechazadas sin registrar', r6 == r7 == r8 == 'desconocida' and reg('P1') == r_ant
-          and 'Use tarjetas R o D' in pg.evaluate("VOZ.ultimoPol||''"), (r6, r7, r8, pg.evaluate("VOZ.ultimoPol")))
+          and 'Use tarjetas R, D' in pg.evaluate("VOZ.ultimoPol||''"), (r6, r7, r8, pg.evaluate("VOZ.ultimoPol")))
     b0 = rac('P1')
     pg.evaluate("__leerNdef('R','04:DD')")
     esperar(f"S.hechos.get('P1').racimos==={b0 + 1}")
