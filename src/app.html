@@ -3558,10 +3558,10 @@ $('#biOk').onclick=()=>{$('#bannerInst').hidden=true;instalarApp();};
 $('#biNo').onclick=()=>{$('#bannerInst').hidden=true;try{localStorage.setItem('cos_banner_inst',String(Date.now()));}catch(e){}};
 /* ---------- Hora real del celular ----------
    Desfase = hora real − hora del celular. Se mide con el GPS (APK: hora de los satélites, sirve sin internet) o con internet
-   (cabecera Date del servidor). Si pasa de 5 minutos se advierte (no se bloquea) y los registros guardan siempre la hora real.
+   (cabecera Date del servidor). Si pasa de 10 minutos se advierte (no se bloquea) y los registros guardan siempre la hora real.
    Si alguien cambia la hora del celular durante la jornada, el salto se detecta con el reloj interno y se compensa. */
 const HORA={desfase:null,fuente:'',medido:0,base:null,avisado:0,cerrado:0};
-const TOL_HORA=5*60000;
+const TOL_HORA=10*60000;
 function ahoraReal(){return Date.now()+(HORA.desfase||0);}
 function ahoraLocalDe(ms){const d=new Date(ms);return `${fechaLocal(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}`;}
 function estadoHora(){return {fuente:HORA.desfase==null?'telefono':HORA.fuente,desfase_s:Math.round((HORA.desfase||0)/1000),medido:HORA.medido?new Date(HORA.medido).toISOString():null};}

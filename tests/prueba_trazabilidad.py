@@ -114,7 +114,9 @@ with sync_playwright() as p:
         pg.evaluate(f"procesarTextoQR({repr(f)})")
     time.sleep(.3)
     # Copia de un cortero en «Corte y recolección» (conteo doble), armada como la arma su celular
-    pg.evaluate("""async()=>{const j={id:'jcr',labor:'corte_recoleccion',inicio:new Date().toISOString(),evaluador:'Cortero Dos',usuario:'cr2',descargues:[],alces:[]};
+    pg.evaluate("""async()=>{const tel=Date.now()-3600e3,j={id:'jcr',labor:'corte_recoleccion',inicio:new Date(tel).toISOString(),inicio_real:new Date(tel+900e3).toISOString(),
+        fin:new Date(tel+1800e3).toISOString(),fin_real:new Date(tel+2700e3).toISOString(),hora:{fuente:'gps',desfase_s:900},hora_fin:{fuente:'gps',desfase_s:900},
+        evaluador:'Cortero Dos',usuario:'cr2',descargues:[],alces:[]};window.__jcr=j;
       const regs=[{jornada_id:'jcr',racimos:2,lote:'A1'},{jornada_id:'jcr',racimos:1,lote:'B7'}];
       const o={...copiaJornada(j),...(()=>{const r=racimosDeJornada(j,regs);return {rc:r.corte,rr:r.recoleccion,lotes:r.lotes};})()};
       for(const f of await framesCopia(o))await procesarTextoQR(f);}""")
@@ -126,6 +128,11 @@ with sync_playwright() as p:
     filas = pg.eval_on_selector_all('#tsOper tr', 'rs=>rs.map(r=>r.textContent)')
     check('Resumen por operario con R corte y R recolección', any('Cortero Dos' in x and 'Corte y recolección' in x and '33' in x.replace(' ','') for x in filas) and 'Total' in filas[-1], filas)
     check('Cuadre por lote: A1 cortados, recolectados y alzados', t['lot']['A1'] == {'c': 2, 'r': 7, 'a': 4}, t['lot'])
+    hc = pg.evaluate("(()=>{const c=copiaJornada(__jcr);return {ini:c.ini,fin:c.fin,hf:c.hf,ds:c.ds,iniReal:hhmm(__jcr.inicio_real),finReal:hhmm(__jcr.fin_real)};})()")
+    check('Copia con hora real (GPS): inicio y fin corregidos, fuente y desfase', hc['ini'] == hc['iniReal'] and hc['fin'] == hc['finReal'] and hc['hf'] == 'gps' and hc['ds'] == 900, hc)
+    al = pg.text_content('#tsAlertas')
+    check('Tablero: alerta de hora desfasada más de 10 min (⏰ 15 min atrasada)', '⏰ Cortero Dos' in al and '15 min atrasada' in al, al)
+    check('Tablero: marca ⏰ en la fila del operario', any('Cortero Dos' in x and '⏰' in x for x in filas), filas)
     check('Acopio sin alzar: el viaje 2 (sin ficha, sin alce cerca)', t['pend'] == 1 and 'Acopio sin alzar' in pg.text_content('#tsAlertas'))
     if CAPTURA:
         time.sleep(.4); pg.screenshot(path=CAPTURA.replace('.png', '_tablero.png'), full_page=True)

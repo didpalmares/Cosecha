@@ -1,6 +1,6 @@
 /* Service worker de Cosecha: permite abrir la aplicación y ver mapas sin conexión.
    Las llamadas a la API de GitHub no se guardan en caché. */
-const APP='cosecha-20261126-1352';
+const APP='cosecha-20261127-0228';
 const TESELAS='cosecha-teselas-v1';
 const ARCHIVOS=['./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/icon-maskable-192.png','./icons/icon-maskable-512.png','./icons/apple-touch-icon.png','./icons/sv_icono.svg'];
 /* La página principal se pide como documento HTML (Accept: text/html). En la APK de Android, Capacitor intercepta esa

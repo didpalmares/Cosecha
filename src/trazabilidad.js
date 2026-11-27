@@ -143,10 +143,20 @@ async function descomprimirTxt(s){
   const st=new Blob([u8De(s.slice(1))]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
   return await new Response(st).text();}
 const r6=x=>Math.round(Number(x)*1e6)/1e6;
+/* Hora real (GPS o internet) de la jornada: el inicio y el fin del teléfono se corrigen con inicio_real/fin_real;
+   la copia lleva la fuente de la hora y el desfase para que el supervisor vea qué celular tenía la hora mal. */
+const hoyReal=()=>fechaLocal(typeof ahoraReal==='function'?ahoraReal():Date.now());
+function horaCopia(j){
+  const hs=[j.hora,j.hora_fin];if(!j.fin&&typeof estadoHora==='function')hs.push(estadoHora());
+  const med=hs.filter(h=>h&&h.fuente&&h.fuente!=='telefono');
+  if(!med.length)return {hf:'telefono',ds:0};
+  const m=med.reduce((a,b)=>Math.abs(b.desfase_s||0)>Math.abs(a.desfase_s||0)?b:a);
+  return {hf:m.fuente,ds:Math.round(m.desfase_s||0)};}
+const TOL_HORA_S=600;   // 10 minutos
 function copiaJornada(j){
   const rac=racimosDeJornada(j),lab=laborInfo(j.labor);
   return {v:1,id:j.id,u:j.usuario||(SES&&SES.u)||'',nom:j.evaluador||(SES&&SES.nombre)||'',lab:lab?lab.id:'corte',zona:j.zona||'',
-    f:fechaLocal(j.inicio),ini:hhmm(j.inicio),fin:j.fin?hhmm(j.fin):'',km:+(j.km||0).toFixed(2),
+    f:fechaLocal(j.inicio_real||j.inicio),ini:hhmm(j.inicio_real||j.inicio),fin:j.fin?hhmm(j.fin_real||j.fin):'',...horaCopia(j),km:+(j.km||0).toFixed(2),
     rc:rac.corte,rr:rac.recoleccion,ra:rac.alzados,lotes:rac.lotes,vab:j.viaje||0,
     aco:(j.descargues||[]).map(d=>[d.n,d.lote||'',d.racimos,r6(d.lat),r6(d.lng),d.hora||'',d.ficha?idAcopio(d):'',d.aco||idAcopio(d)]),
     alz:(j.alces||[]).map(a=>[a.n,a.lote||'',a.racimos,r6(a.lat),r6(a.lng),a.hora||'',a.ficha?a.ficha.id:'',a.esperados||0])};}
@@ -178,8 +188,8 @@ async function compartirJornada(j){
 /* ---------- Recibir copias (supervisor) ---------- */
 const COPIAS_K='cos_copias';
 function copiasSup(){try{return JSON.parse(localStorage.getItem(COPIAS_K)||'{}')||{};}catch(e){return {};}}
-function guardarCopia(o){const m=copiasSup();m[o.u+'|'+o.id]={...o,recibida:new Date().toISOString()};
-  const lim=fechaLocal(Date.now()-10*864e5);for(const k in m)if(String(m[k].f||'')<lim)delete m[k];   // se guardan 10 días
+function guardarCopia(o){const m=copiasSup();m[o.u+'|'+o.id]={...o,recibida:new Date(typeof ahoraReal==='function'?ahoraReal():Date.now()).toISOString()};
+  const lim=fechaLocal((typeof ahoraReal==='function'?ahoraReal():Date.now())-10*864e5);for(const k in m)if(String(m[k].f||'')<lim)delete m[k];   // se guardan 10 días
   try{localStorage.setItem(COPIAS_K,JSON.stringify(m));}catch(e){toast('No se pudo guardar la copia: '+e.message,5000);}}
 const QRR={stream:null,t:null,partes:{},recibidas:[]};
 function pararCamaraQR(){clearTimeout(QRR.t);QRR.t=null;try{QRR.stream&&QRR.stream.getTracks().forEach(t=>t.stop());}catch(e){}QRR.stream=null;}
@@ -229,7 +239,7 @@ function acopiosSinAlzar(cs){
     if(i>=0){usados.add(i);continue;}
     out.push({nom:c.nom,n,lote,racimos:rac,lat,lng,hora,ficha:!!fid});}
   return out;}
-const minDesde=(f,h)=>{const t=Date.parse(`${f}T${h||'00:00'}:00`);return isNaN(t)?null:Math.round((Date.now()-t)/60000);};
+const minDesde=(f,h)=>{const t=Date.parse(`${f}T${h||'00:00'}:00`);return isNaN(t)?null:Math.round(((typeof ahoraReal==='function'?ahoraReal():Date.now())-t)/60000);};
 let CAPA_PEND=null;
 function verPendientesMapa(p){
   if(CAPA_PEND){mapa.removeLayer(CAPA_PEND);CAPA_PEND=null;}if(!p||!p.length)return;
@@ -239,22 +249,25 @@ function verPendientesMapa(p){
   try{mapa.fitBounds(L.latLngBounds(p.map(a=>[a.lat,a.lng])),{padding:[50,50],maxZoom:18});}catch(e){}}
 function abrirTablero(fecha){
   const todas=Object.values(copiasSup());const fechas=[...new Set(todas.map(c=>c.f))].sort().reverse();
-  fecha=fecha||(fechas.includes(fechaLocal())?fechaLocal():(fechas[0]||fechaLocal()));
+  const HOY=hoyReal();fecha=fecha||(fechas.includes(HOY)?HOY:(fechas[0]||HOY));
   const CS=todas.filter(c=>c.f===fecha).sort((a,b)=>String(a.nom).localeCompare(String(b.nom))||String(a.ini).localeCompare(String(b.ini)));
   const tot={rc:0,rr:0,ra:0,aco:0};const lot={};
   for(const c of CS){tot.rc+=c.rc||0;tot.rr+=c.rr||0;tot.ra+=c.ra||0;tot.aco+=(c.aco||[]).length;
     for(const [l,v] of Object.entries(c.lotes||{})){const x=lot[l]||(lot[l]={c:0,r:0,a:0});x.c+=v.c||0;x.r+=v.r||0;x.a+=v.a||0;}}
   const pend=acopiosSinAlzar(CS),abiertos=CS.filter(c=>c.vab>0),hay=x=>x?num(x):'—';
-  const filas=CS.map(c=>`<tr><td><b>${esc(c.nom)}</b><small>${esc((laborInfo(c.lab)||{}).corto||c.lab)} · ${esc(Object.keys(c.lotes||{}).join(', ')||'—')} · ${esc(c.ini)}–${esc(c.fin||'…')}</small></td>
+  const malH=c=>Math.abs(c.ds||0)>TOL_HORA_S;
+  const filas=CS.map(c=>`<tr><td><b>${esc(c.nom)}</b>${malH(c)?' <span title="Hora del celular desfasada">⏰</span>':''}<small>${esc((laborInfo(c.lab)||{}).corto||c.lab)} · ${esc(Object.keys(c.lotes||{}).join(', ')||'—')} · ${esc(c.ini)}–${esc(c.fin||'…')}</small></td>
     <td class="n">${hay(c.rc)}</td><td class="n">${hay(c.rr)}</td><td class="n">${hay(c.ra)}</td><td class="n">${hay((c.aco||[]).length)}</td></tr>`).join('');
   const dif=x=>{const t=[];if(x.c&&x.r<x.c)t.push(`${num(x.c-x.r)} sin recolectar`);if(x.r&&x.a<x.r)t.push(`${num(x.r-x.a)} sin alzar`);if(x.r>x.c&&x.c)t.push(`${num(x.r-x.c)} recolectados de más`);return t.join(', ');};
   const filasL=Object.entries(lot).sort((a,b)=>a[0].localeCompare(b[0])).map(([l,x])=>{const d=dif(x);
     return `<tr><td><b>${esc(l)}</b>${d?`<small class="dif">${d}</small>`:'<small>✓ cuadra</small>'}</td><td class="n">${hay(x.c)}</td><td class="n">${hay(x.r)}</td><td class="n">${hay(x.a)}</td></tr>`;}).join('');
-  const alertas=[...pend.map(a=>{const m=fecha===fechaLocal()?minDesde(fecha,a.hora):null;
+  const alertas=[...pend.map(a=>{const m=fecha===HOY?minDesde(fecha,a.hora):null;
       return `<li>📍 Acopio sin alzar · ${a.lote?'lote <b>'+esc(a.lote)+'</b> · ':''}${num(a.racimos)} racimos · ${esc(a.nom)} (viaje ${a.n}) · desde ${esc(a.hora||'—')}${m!=null&&m>=0?` (hace ${m>=60?Math.floor(m/60)+' h '+(m%60)+' min':m+' min'})`:''}${a.ficha?' · con ficha':''}</li>`;}),
-    ...abiertos.map(c=>`<li>🚜 ${esc(c.nom)} tiene ${num(c.vab)} racimos recolectados sin descargar (viaje abierto).</li>`)];
+    ...abiertos.map(c=>`<li>🚜 ${esc(c.nom)} tiene ${num(c.vab)} racimos recolectados sin descargar (viaje abierto).</li>`),
+    ...CS.filter(malH).map(c=>`<li>⏰ ${esc(c.nom)}: la hora del celular estaba ${esc(textoDesfase(c.ds*1000))}. Los registros se guardaron con la hora real (${c.hf==='gps'?'GPS':'internet'}); pídale que corrija la fecha y hora del celular.</li>`),
+    ...CS.filter(c=>c.hf==='telefono').map(c=>`<li>🕓 ${esc(c.nom)}: hora sin verificar (no hubo GPS ni internet para comprobarla).</li>`)];
   abrirHoja('Tablero del supervisor',`
-    <div class="tab-fechas">${(fechas.length?fechas:[fecha]).slice(0,7).map(f=>`<button type="button" class="btn${f===fecha?' prim':''}" data-tf="${esc(f)}">${esc(f===fechaLocal()?'Hoy':f.slice(5).split('-').reverse().join('/'))}</button>`).join('')}</div>
+    <div class="tab-fechas">${(fechas.length?fechas:[fecha]).slice(0,7).map(f=>`<button type="button" class="btn${f===fecha?' prim':''}" data-tf="${esc(f)}">${esc(f===HOY?'Hoy':f.slice(5).split('-').reverse().join('/'))}</button>`).join('')}</div>
     <div class="stats" style="margin-top:10px">
       <div class="stat rac-lab">${svgPic('corte',34)}<b>${num(tot.rc)}</b><span>Racimos de corte</span></div>
       <div class="stat rac-lab">${svgPic('recoleccion',34)}<b>${num(tot.rr)}</b><span>Racimos de recolección</span></div>

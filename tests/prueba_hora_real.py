@@ -1,5 +1,5 @@
 """Hora real del celular: desfase medido con internet (cabecera Date) o con el GPS (plugin nativo simulado, sin internet);
-aviso si pasa de 5 min (no bloquea); los registros guardan la hora real y la del teléfono; cambio manual de la hora detectado."""
+aviso si pasa de 10 min (no bloquea); los registros guardan la hora real y la del teléfono; cambio manual de la hora detectado."""
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from comun import CANAL, INIT_VOZ
@@ -38,6 +38,10 @@ with sync_playwright() as p:
     # 1) Celular en hora (internet): sin aviso
     pg.evaluate("revisarHora()"); time.sleep(.6)
     check('En hora (internet): desfase ≈ 0 y sin aviso', abs(pg.evaluate('HORA.desfase')) < 3000 and pg.is_hidden('#bannerHora'), pg.evaluate('HORA.desfase'))
+    # 1b) 8 min de desfase: dentro de la tolerancia (10 min), sin aviso
+    SERV['desfase_s'] = 8 * 60
+    pg.evaluate("revisarHora()"); time.sleep(.6)
+    check('Atrasado 8 min: se corrige la hora pero sin aviso (tolerancia 10 min)', abs(pg.evaluate('HORA.desfase') - 8 * 60000) < 3000 and pg.is_hidden('#bannerHora'), pg.evaluate('HORA.desfase'))
     # 2) Servidor 20 min adelante = celular 20 min atrasado
     SERV['desfase_s'] = 20 * 60
     pg.evaluate("revisarHora()"); time.sleep(.6)
